@@ -752,8 +752,8 @@ namespace AdServer::Bidding
     Generics::MonoList<Generics::MonoString> string_holders_;
   };
 
-  inline std::string
-  decode_json_url_if_possible(std::string_view url)
+  inline std::string_view
+  decode_json_url_if_possible(std::string_view url, std::string& decoded)
     noexcept
   {
     const String::AsciiStringManip::Caseless MIME_PREFIX("%3a%2f%2f");
@@ -776,9 +776,9 @@ namespace AdServer::Bidding
           {
             try
             {
-              std::string res;
-              String::StringManip::mime_url_decode(String::SubString(url.data(), url.size()), res);
-              return res;
+              String::StringManip::mime_url_decode(
+                String::SubString(url.data(), url.size()), decoded);
+              return decoded;
             }
             catch(const eh::Exception&)
             {}
@@ -789,11 +789,10 @@ namespace AdServer::Bidding
           {
             try
             {
-              std::string res;
               String::StringManip::js_unicode_decode(
                 String::SubString(url.data(), url.size()),
-                res);
-              return res;
+                decoded);
+              return decoded;
             }
             catch(const eh::Exception&)
             {}
@@ -802,7 +801,7 @@ namespace AdServer::Bidding
       }
     }
 
-    return std::string(url);
+    return url;
   }
 
   inline void
@@ -813,8 +812,9 @@ namespace AdServer::Bidding
     {
       String::SubString url_sstr(url_value.data(), url_value.size());
       String::StringManip::trim(url_sstr);
+      std::string decoded;
       url = HTTP::BrowserAddress(decode_json_url_if_possible(
-        std::string_view(url_sstr.data(), url_sstr.size())));
+        std::string_view(url_sstr.data(), url_sstr.size()), decoded));
     }
     catch(const eh::Exception&)
     {}

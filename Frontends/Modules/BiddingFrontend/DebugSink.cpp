@@ -832,13 +832,13 @@ namespace AdServer::Bidding
       return;
     }
 
-    const std::string debug_info = make_debug_info_(user_id);
+    std::string debug_info = make_debug_info_(user_id);
 
     try
     {
       if (require_debug_info_ == DI_HEADER)
       {
-        response->add_header_nocopy_name(Response::Header::DEBUG_INFO, debug_info);
+        response->add_header_nocopy_name(Response::Header::DEBUG_INFO, std::move(debug_info));
       }
       else if (require_debug_info_ == DI_BODY)
       {

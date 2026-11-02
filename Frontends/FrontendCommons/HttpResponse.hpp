@@ -3,6 +3,9 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 
 #include <Stream/BinaryStream.hpp>
 #include <String/SubString.hpp>
@@ -50,20 +53,20 @@ namespace FCGI
     add_header_nocopy(const String::SubString& name, const String::SubString& value)
       /*throw(eh::Exception)*/;
 
-    void
-    add_header_nocopy_name(const String::SubString& name, std::string value)
+    template<typename Value>
+    void add_header_nocopy_name(const String::SubString& name, Value&& value)
       /*throw(eh::Exception)*/;
 
-    void
-    add_header(std::string name, std::string value)
+    template<typename Name, typename Value>
+    void add_header(Name&& name, Value&& value)
       /*throw(eh::Exception)*/;
 
     void
     set_content_type_nocopy(const String::SubString& value)
       /*throw(eh::Exception)*/;
 
-    void
-    set_content_type(std::string value)
+    template<typename Value>
+    void set_content_type(Value&& value)
       /*throw(eh::Exception)*/;
 
     void
@@ -91,6 +94,13 @@ namespace FCGI
     ~HttpResponse() noexcept override = default;
 
   private:
+    template<typename Value>
+    String::SubString hold_header_string_(Value&& value);
+
+    String::SubString copy_header_string_(std::string_view value);
+
+    String::SubString move_header_string_(std::string&& value);
+
     int status_;
     static constexpr std::size_t INLINE_HEADER_COUNT = 16;
     Generics::MonoAllocatorFixedArena<INLINE_HEADER_COUNT * sizeof(HTTP::SubHeader)> header_arena_;
@@ -101,6 +111,43 @@ namespace FCGI
     OutputStream output_stream_;
     bool cookie_installed_;
   };
+
+  template<typename Value>
+  void HttpResponse::add_header_nocopy_name(const String::SubString& name, Value&& value)
+  {
+    add_header_nocopy(name, hold_header_string_(std::forward<Value>(value)));
+  }
+
+  template<typename Name, typename Value>
+  void HttpResponse::add_header(Name&& name, Value&& value)
+  {
+    const auto stored_name = hold_header_string_(std::forward<Name>(name));
+    const auto stored_value = hold_header_string_(std::forward<Value>(value));
+    add_header_nocopy(stored_name, stored_value);
+  }
+
+  template<typename Value>
+  void HttpResponse::set_content_type(Value&& value)
+  {
+    add_header_nocopy_name(String::SubString("Content-Type"), std::forward<Value>(value));
+  }
+
+  template<typename Value>
+  String::SubString HttpResponse::hold_header_string_(Value&& value)
+  {
+    if constexpr (std::is_same_v<Value, std::string>)
+    {
+      return move_header_string_(std::move(value));
+    }
+    else if constexpr (std::is_same_v<std::decay_t<Value>, String::SubString>)
+    {
+      return copy_header_string_(std::string_view(value.data(), value.size()));
+    }
+    else
+    {
+      return copy_header_string_(std::string_view(value));
+    }
+  }
 
   typedef ReferenceCounting::SmartPtr<HttpResponse>
     HttpResponse_var;

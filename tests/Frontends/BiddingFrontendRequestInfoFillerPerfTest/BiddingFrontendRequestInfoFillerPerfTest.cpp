@@ -19,6 +19,8 @@
 #include <Logger/StreamLogger.hpp>
 
 #include <Commons/ErrorHandler.hpp>
+#include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <LogCommons/CsvUtils.hpp>
 #include <Commons/UserIdBlackList.hpp>
 #include <xsd/CampaignSvcs/DomainConfig.hpp>
 
@@ -188,6 +190,8 @@ namespace
 
     if (actual_domain_config_path.empty())
     {
+      const xsd::AdServer::Configuration::DomainConfigurationType domain_config;
+      common_module.domain_parser_ = new AdServer::CampaignSvcs::DomainParser(domain_config);
       return;
     }
 
@@ -455,6 +459,223 @@ namespace
     return seed;
   }
 
+  void verify_url_buffers()
+  {
+    const std::string plain = "https://example.com/path?q=value#fragment";
+    std::string decoded;
+    const auto view = AdServer::Bidding::decode_json_url_if_possible(plain, decoded);
+    if (view.data() != plain.data() || view != plain || !decoded.empty())
+    {
+      throw std::runtime_error("plain JSON URL was copied");
+    }
+
+    const auto encoded_view = AdServer::Bidding::decode_json_url_if_possible(
+      "http%3a%2f%2fexample.com%2fpath", decoded);
+    if (encoded_view != "http://example.com/path" || encoded_view.data() != decoded.data())
+    {
+      throw std::runtime_error("encoded JSON URL was not decoded into owned storage");
+    }
+
+    Generics::MonoAllocatorArena arena;
+    Generics::MonoString result(&arena);
+    for (const auto* input : {"https://example.com/path?q=value#fragment",
+      "http://example.com:8080/path/", "example.com/path", "http://example.com"})
+    {
+      HTTP::BrowserAddress address{std::string_view(input)};
+      for (unsigned long flags = 0; flags < 512; ++flags)
+      {
+        const auto expected = FrontendCommons::normalize_abs_url(address, flags);
+        FrontendCommons::normalize_abs_url(address, result, flags);
+        if (std::string_view(result.data(), result.size()) != expected)
+        {
+          throw std::runtime_error("Mono URL normalization differs from std::string");
+        }
+      }
+    }
+  }
+
+  void verify_referer_selection(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    const std::pair<std::string_view, std::string_view> cases[] = {
+      {R"("page":"http://example.com/page","domain":"example.com")",
+        "http://example.com/page"},
+      {R"("page":"http://other.net/page","domain":"example.com","name":"name.org")",
+        "http://example.com"},
+      {R"("page":"http://other.net/page","name":"example.com")", "http://example.com"},
+      {R"("page":"https://example.com/path?q=x#f")", "https://example.com/path?q=x#f"}
+    };
+    for (const auto& [site, expected] : cases)
+    {
+      std::string body =
+        R"({"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],"site":{)";
+      body += site;
+      body += "}}";
+      AdServer::Bidding::RequestInfo info;
+      AdServer::Bidding::JsonProcessingContext context(*info.resource());
+      info.current_time = Generics::Time::get_time_of_day();
+      filler.fill_by_openrtb_request(info, context, std::move(body));
+      if (std::string_view(info.referer.data(), info.referer.size()) != expected)
+      {
+        throw std::runtime_error(
+          "referer selection changed: expected " + std::string(expected) + ", got " +
+          std::string(info.referer.data(), info.referer.size()));
+      }
+    }
+  }
+
+  void verify_openrtb_body_ownership(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    const std::string body =
+      R"({"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],)"
+      R"("user":{"keywords":"borrowed-keywords-longer-than-sso","gender":"f\u0065male"}})";
+    AdServer::Bidding::RequestInfo borrowed_info;
+    AdServer::Bidding::JsonProcessingContext borrowed_context(*borrowed_info.resource());
+    AdServer::Bidding::RequestInfo owned_info;
+    AdServer::Bidding::JsonProcessingContext owned_context(*owned_info.resource());
+    borrowed_info.current_time = owned_info.current_time = Generics::Time::get_time_of_day();
+
+    filler.fill_by_openrtb_request_view(borrowed_info, borrowed_context, body);
+    {
+      std::string temporary = body;
+      filler.fill_by_openrtb_request(owned_info, owned_context, std::move(temporary));
+    }
+
+    const auto keyword_pos = body.find("borrowed-keywords-longer-than-sso");
+    if (borrowed_context.user_keywords.data() != body.data() + keyword_pos)
+    {
+      throw std::runtime_error("borrowed OpenRTB body was copied");
+    }
+
+    if (owned_context.user_keywords != borrowed_context.user_keywords ||
+      owned_context.user_keywords.data() == borrowed_context.user_keywords.data() ||
+      borrowed_context.user_gender != "female" || owned_context.user_gender != "female" ||
+      parsed_result_checksum(borrowed_info, borrowed_context) !=
+        parsed_result_checksum(owned_info, owned_context))
+    {
+      throw std::runtime_error("owned and borrowed OpenRTB parsing differ");
+    }
+
+    borrowed_context.clear();
+    borrowed_info.reset();
+    owned_context.clear();
+    owned_info.reset();
+  }
+
+  void verify_shared_ext_tag_id(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    for (const auto& name : {std::string("n"), std::string(40, 'n')})
+    {
+      AdServer::Bidding::RequestInfo info;
+      AdServer::Bidding::JsonProcessingContext context(*info.resource());
+      info.current_time = Generics::Time::get_time_of_day();
+      {
+        std::string body = R"({"id":"1","imp":[)";
+        for (int i = 0; i < 4; ++i)
+        {
+          if (i != 0)
+          {
+            body += ',';
+          }
+
+          body += R"({"id":")" + std::to_string(i) + R"(","banner":{"w":300,"h":250}})";
+        }
+
+        body += R"(],"site":{"id":"s","publisher":{"id":"p","name":"p"},"name":")";
+        body += name + R"("}})";
+        filler.fill_by_openrtb_request(info, context, std::move(body));
+      }
+
+      if (info.ad_slots.size() != 4)
+      {
+        throw std::runtime_error("shared ext_tag_id test produced wrong slot count");
+      }
+
+      const char* shared_data = info.ad_slots.front().ext_tag_id.data();
+      info.ad_slots.reserve(100);
+      for (int i = 0; i < 100; ++i)
+      {
+        info.hold_string(std::string(100, 'x'));
+      }
+
+      const std::string expected = "p-s-p-" + name;
+      for (const auto& slot : info.ad_slots)
+      {
+        if (slot.ext_tag_id != expected || slot.ext_tag_id.data() != shared_data)
+        {
+          throw std::runtime_error("ext_tag_id is not shared or its storage was invalidated");
+        }
+      }
+
+      context.clear();
+      info.reset();
+    }
+  }
+
+  void verify_ext_tag_id_normalization(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    std::vector<std::string> names = {"", "name", "one\rtwo\nthree", std::string(10000, 'x')};
+    for (std::size_t length : {0, 41, 42, 43, 44, 45, 50})
+    {
+      names.push_back(std::string(length, 'a') + "я€😀");
+      for (unsigned int byte = 0; byte < 256; ++byte)
+      {
+        names.push_back(std::string(length, 'a') + static_cast<char>(byte) + "%\r\n");
+      }
+    }
+
+    for (const auto& name : names)
+    {
+      std::string original = "p-s-n-" + (name.empty() ? std::string("0") : name);
+      original.resize(std::min<std::size_t>(original.size(), 50));
+      for (char& ch : original)
+      {
+        if (ch == '\r' || ch == '\n')
+        {
+          ch = ' ';
+        }
+      }
+
+      String::SubString prefix;
+      std::string expected;
+      if (String::StringManip::utf8_substr(String::SubString(original), 50, prefix))
+      {
+        expected = prefix.str();
+      }
+      else
+      {
+        AdServer::LogProcessing::undisplayable_mime_encode(expected, String::SubString(original));
+        expected = expected.substr(0, 50);
+      }
+
+      std::string request =
+        R"({"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],)"
+        R"("site":{"id":"s","publisher":{"id":"p","name":"n"},"name":")";
+      for (unsigned char ch : name)
+      {
+        if (ch < 32 || ch == '"' || ch == '\\')
+        {
+          request += "\\u00";
+          request += String::AsciiStringManip::HEX_DIGITS[ch >> 4];
+          request += String::AsciiStringManip::HEX_DIGITS[ch & 0x0F];
+        }
+        else
+        {
+          request += static_cast<char>(ch);
+        }
+      }
+
+      request += R"("}})";
+      AdServer::Bidding::RequestInfo info;
+      AdServer::Bidding::JsonProcessingContext context(*info.resource());
+      info.current_time = Generics::Time::get_time_of_day();
+      filler.fill_by_openrtb_request(info, context, std::move(request));
+      if (info.ad_slots.empty() || info.ad_slots.front().ext_tag_id != expected)
+      {
+        throw std::runtime_error("ext_tag_id normalization differs from previous implementation");
+      }
+    }
+  }
+
   void
   verify_ext_tag_id_is_single_line(const AdServer::Bidding::RequestInfoFiller& filler)
   {
@@ -478,7 +699,7 @@ namespace
     {
       throw std::runtime_error(
         "ext_tag_id normalization failed: '" +
-        request_info.ad_slots.front().ext_tag_id + "'");
+        std::string(request_info.ad_slots.front().ext_tag_id) + "'");
     }
   }
 
@@ -622,7 +843,12 @@ main(int argc, char** argv)
       account_traits);
 
     verify_ext_tag_id_is_single_line(filler);
+    verify_ext_tag_id_normalization(filler);
+    verify_shared_ext_tag_id(filler);
     verify_invalid_utf8_is_ignored(filler);
+    verify_openrtb_body_ownership(filler);
+    verify_url_buffers();
+    verify_referer_selection(filler);
     verify_debug_params(filler);
 
     const auto started_at = std::chrono::steady_clock::now();

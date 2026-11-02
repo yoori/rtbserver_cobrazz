@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <charconv>
 #include <cmath>
@@ -1554,7 +1555,7 @@ namespace AdServer::Bidding
       std::string ext_tag_id = std::to_string(seller_id);
       ext_tag_id += '-';
       ext_tag_id += anonymous_id.empty() ? "0" : anonymous_id;
-      ad_slot_request.ext_tag_id = normalize_ext_tag_id_(ext_tag_id);
+      ad_slot_request.ext_tag_id = request_info.hold_string(normalize_ext_tag_id_(ext_tag_id));
 
       ad_slot_request.debug_ccg = 0;
 
@@ -1731,45 +1732,42 @@ namespace AdServer::Bidding
     std::string_view publisher_name,
     std::string_view name)
   {
-    std::string res;
-    res.reserve(EXT_TAG_ID_MAX_LENGTH);
-
-    const auto append_or_zero = [&res](std::string_view value)
+    std::array<char, EXT_TAG_ID_MAX_LENGTH> buffer;
+    std::size_t size = 0;
+    for (auto value : {publisher_id, id, publisher_name, name})
     {
+      if (size != 0 && size < buffer.size())
+      {
+        buffer[size++] = '-';
+      }
+
       if (value.empty())
       {
-        res += '0';
+        value = "0";
       }
-      else
+
+      const auto count = std::min(value.size(), buffer.size() - size);
+      std::copy_n(value.data(), count, buffer.data() + size);
+      size += count;
+      if (size == buffer.size())
       {
-        res.append(value.data(), value.size());
+        break;
       }
-    };
-
-    append_or_zero(publisher_id);
-    res += '-';
-    append_or_zero(id);
-    res += '-';
-    append_or_zero(publisher_name);
-    res += '-';
-    append_or_zero(name);
-
-    if (res.size() > EXT_TAG_ID_MAX_LENGTH)
-    {
-      res.resize(EXT_TAG_ID_MAX_LENGTH);
     }
 
-    return normalize_ext_tag_id_(res);
+    return normalize_ext_tag_id_(std::string_view(buffer.data(), size));
   }
 
-  void
-  RequestInfoFiller::fill_by_openrtb_request(
-    RequestInfo& request_info,
-    JsonProcessingContext& context,
-    std::string&& bid_request) const
-    /*throw(InvalidParamException, Exception)*/
+  void RequestInfoFiller::fill_by_openrtb_request(
+    RequestInfo& request_info, JsonProcessingContext& context, std::string&& bid_request) const
   {
-    // static const char* FUN = "RequestInfoFiller::fill_by_openrtb_request()";
+    fill_by_openrtb_request_view(
+      request_info, context, request_info.hold_string(std::move(bid_request)));
+  }
+
+  void RequestInfoFiller::fill_by_openrtb_request_view(
+    RequestInfo& request_info, JsonProcessingContext& context, std::string_view bid_request) const
+  {
     Generics::MonoString& keywords = request_info.keywords;
     request_info.client = OPENRTB_APPLICATION;
     request_info.client_version = OPENRTB_APPLICATION_VERSION;
@@ -1791,9 +1789,7 @@ namespace AdServer::Bidding
       request_info.fill_track_pixel = true;
     }
 
-    const std::string_view held_bid_request = request_info.hold_string(std::move(bid_request));
-
-    parse_openrtb_request_(request_info, context, held_bid_request);
+    parse_openrtb_request_(request_info, context, bid_request);
 
     using OpenRtbKeywordFormatter = BasicKeywordFormatter<Generics::MonoString>;
     std::vector<std::string_view> invalid_utf8_keyword_fields;
@@ -2124,16 +2120,17 @@ namespace AdServer::Bidding
       request_info.filter_request,
       context.app);
 
-    std::string ext_tag_id;
+    std::string_view ext_tag_id;
 
-    HTTP::HTTPAddress selected_referer;
+    HTTP::HTTPAddress site_name_referer;
+    const HTTP::HTTPAddress* selected_referer = &site_name_referer;
     if (context.site)
     {
-      ext_tag_id = openrtb_ext_tag_id(
+      ext_tag_id = request_info.hold_string(openrtb_ext_tag_id(
         request_info.bid_publisher_id,
         request_info.bid_site_id,
         context.publisher_name,
-        context.site_name);
+        context.site_name));
 
       if (context.site_page.secure() ||
         context.site_domain.secure() ||
@@ -2144,12 +2141,12 @@ namespace AdServer::Bidding
         request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
       }
 
-      select_referer_(request_info, context, selected_referer);
+      selected_referer = &select_referer_(request_info, context, site_name_referer);
 
       fill_by_referer(
         request_info,
         request_info.search_words,
-        selected_referer,
+        *selected_referer,
         true, // fill_search_words
         false // fill_instantiate_type
         );
@@ -2157,11 +2154,11 @@ namespace AdServer::Bidding
     else if (context.app)
     {
       request_info.profile_referer = enable_profile_referer_;
-      ext_tag_id = openrtb_ext_tag_id(
+      ext_tag_id = request_info.hold_string(openrtb_ext_tag_id(
         request_info.bid_publisher_id,
         context.app_id,
         context.publisher_name,
-        context.app_name);
+        context.app_name));
 
       std::string app_bundle_url;
 
@@ -2189,7 +2186,7 @@ namespace AdServer::Bidding
             )
           )
         {
-          request_info.referer = FrontendCommons::normalize_abs_url(context.app_domain);
+          FrontendCommons::normalize_abs_url(context.app_domain, request_info.referer);
         }
         else if (!context.app_store_url.url().empty())
         {
@@ -2207,7 +2204,7 @@ namespace AdServer::Bidding
         //   to prevent double search phrase
         //    compare selected_referer with site_ref
         // ADSC-10103
-        if (context.site_ref.url() != selected_referer.url())
+        if (context.site_ref.url() != selected_referer->url())
         {
           fill_additional_url_(request_info, request_info.search_words, context.site_ref);
         }
@@ -3208,10 +3205,11 @@ namespace AdServer::Bidding
           request_info.creative_instantiate_type = FrontendCommons::SECURE_INSTANTIATE_TYPE;
         }
 
-        std::string normalized_referer = FrontendCommons::normalize_abs_url(referer);
+        FrontendCommons::normalize_abs_url(referer, request_info.referer);
+        const String::SubString normalized_referer(
+          request_info.referer.data(), request_info.referer.size());
         request_info.full_referer_hash = FrontendCommons::referer_hash(normalized_referer);
         request_info.short_referer_hash = FrontendCommons::short_referer_hash(normalized_referer);
-        request_info.referer = std::move(normalized_referer);
 
         if (fill_search_words)
         {
@@ -3448,11 +3446,11 @@ namespace AdServer::Bidding
     }
   }
 
-  void
+  const HTTP::HTTPAddress&
   RequestInfoFiller::select_referer_(
     RequestInfo& request_info,
     const JsonProcessingContext& context,
-    HTTP::HTTPAddress& referer) const
+    HTTP::HTTPAddress& site_name_url) const
     /*throw(eh::Exception)*/
   {
     enum SelectedReferer
@@ -3472,7 +3470,7 @@ namespace AdServer::Bidding
     };
 
     bool site_name_url_initialized = false;
-    HTTP::HTTPAddress site_name_url;
+    const HTTP::HTTPAddress* referer = nullptr;
     SelectedReferer selected_referer_field = SR_NONE;
 
     if (!context.site_page.url().empty())
@@ -3487,12 +3485,12 @@ namespace AdServer::Bidding
 
         if (site_page == site_domain)
         {
-          referer = context.site_page;
+          referer = &context.site_page;
           selected_referer_field = SR_PAGE;
         }
       }
 
-      if (referer.url().empty() && !context.site_name.empty())
+      if ((!referer || referer->url().empty()) && !context.site_name.empty())
       {
         fill_json_url(context.site_name, site_name_url);
 
@@ -3501,7 +3499,7 @@ namespace AdServer::Bidding
 
         if (site_page == site_name)
         {
-          referer = context.site_page;
+          referer = &context.site_page;
           selected_referer_field = SR_PAGE;
         }
 
@@ -3509,11 +3507,11 @@ namespace AdServer::Bidding
       }
     }
 
-    if (referer.url().empty())
+    if (!referer || referer->url().empty())
     {
       if (!context.site_domain.url().empty())
       {
-        referer = context.site_domain;
+        referer = &context.site_domain;
         selected_referer_field = SR_DOMAIN;
       }
       else
@@ -3526,25 +3524,25 @@ namespace AdServer::Bidding
 
         if (!site_name_url.url().empty())
         {
-          referer = site_name_url;
+          referer = &site_name_url;
           selected_referer_field = SR_NAME;
         }
         else if (!context.site_page.url().empty())
         {
-          referer = context.site_page;
+          referer = &context.site_page;
           selected_referer_field = SR_PAGE;
         }
         else
         {
-          referer = context.site_ref;
+          referer = &context.site_ref;
           selected_referer_field = SR_REF;
         }
       }
     }
 
-    if (referer.url().empty())
+    if (!referer || referer->url().empty())
     {
-      referer = context.site_referer;
+      referer = &context.site_referer;
       selected_referer_field = SR_REFERER;
     }
 
@@ -3577,6 +3575,7 @@ namespace AdServer::Bidding
     {
       // ignory bad url
     }
+    return *referer;
   }
 
   std::string
@@ -3601,31 +3600,44 @@ namespace AdServer::Bidding
   RequestInfoFiller::normalize_ext_tag_id_(std::string_view src)
     noexcept
   {
-    std::string single_line_src;
-    if (src.find_first_of("\r\n") != std::string_view::npos)
+    std::array<char, EXT_TAG_ID_MAX_LENGTH> buffer;
+    const auto size = std::min(src.size(), buffer.size());
+    for (std::size_t i = 0; i < size; ++i)
     {
-      single_line_src.assign(src);
-      for (char& ch : single_line_src)
+      buffer[i] = src[i] == '\r' || src[i] == '\n' ? ' ' : src[i];
+    }
+
+    const String::SubString input(buffer.data(), size);
+    String::SubString prefix;
+    if (String::StringManip::utf8_substr(input, EXT_TAG_ID_MAX_LENGTH, prefix))
+    {
+      return prefix.str();
+    }
+
+    std::array<char, EXT_TAG_ID_MAX_LENGTH> encoded;
+    std::size_t encoded_size = 0;
+    for (unsigned char ch : input)
+    {
+      if (encoded_size == encoded.size())
       {
-        if (ch == '\r' || ch == '\n')
-        {
-          ch = ' ';
-        }
+        break;
       }
-      src = single_line_src;
+
+      if (AdServer::LogProcessing::NON_ASCII_AND_UNDISPLAYABLE(ch))
+      {
+        const char escape[] = {'%', String::AsciiStringManip::HEX_DIGITS[ch >> 4],
+          String::AsciiStringManip::HEX_DIGITS[ch & 0x0F]};
+        const auto count = std::min(sizeof(escape), encoded.size() - encoded_size);
+        std::copy_n(escape, count, encoded.data() + encoded_size);
+        encoded_size += count;
+      }
+      else
+      {
+        encoded[encoded_size++] = ch;
+      }
     }
 
-    String::SubString res;
-    const String::SubString src_sub_string(src.data(), src.size());
-    if (String::StringManip::utf8_substr(src_sub_string, EXT_TAG_ID_MAX_LENGTH, res))
-    {
-      return res.str();
-    }
-
-    std::string enc_res;
-    AdServer::LogProcessing::undisplayable_mime_encode(
-      enc_res, src_sub_string.substr(0, EXT_TAG_ID_MAX_LENGTH));
-    return enc_res.substr(0, EXT_TAG_ID_MAX_LENGTH);
+    return std::string(encoded.data(), encoded_size);
   }
 
   void

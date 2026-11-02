@@ -334,17 +334,11 @@ namespace AdServer::Bidding
   {
     static const char* FUN = "OpenRtbBidRequestState::read_request()";
 
-    std::string bid_request;
+    std::string_view bid_request = request_holder_->request().body();
 
     try
     {
       const FCGI::HttpRequest& request = request_holder_->request();
-      const std::string_view body = request.body();
-      if (!body.empty())
-      {
-        bid_request.assign(body.data(), body.size());
-      }
-
       // check gzip
       bool apply_unzip = false;
       HTTP::SubHeaderSpan headers = request.headers();
@@ -369,13 +363,11 @@ namespace AdServer::Bidding
           return false;
         }
 
-        bid_request.swap(unpacked_bid_request);
+        bid_request = request_info_.hold_string(std::move(unpacked_bid_request));
       }
 
-      bid_frontend_->request_info_filler()->fill_by_openrtb_request(
-        request_info_,
-        context_,
-        std::move(bid_request));
+      bid_frontend_->request_info_filler()->fill_by_openrtb_request_view(
+        request_info_, context_, bid_request);
 
       return true;
     }

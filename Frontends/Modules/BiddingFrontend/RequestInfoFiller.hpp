@@ -220,7 +220,7 @@ namespace AdServer::Bidding
       std::string_view format;
       unsigned long tag_id = 0;
       Generics::MonoVector<std::string_view> sizes;
-      std::string ext_tag_id;
+      std::string_view ext_tag_id;
       CampaignSvcs::RevenueDecimal min_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
       std::string_view min_ecpm_currency_code;
       Generics::MonoVector<std::string_view> currency_codes;
@@ -588,6 +588,11 @@ namespace AdServer::Bidding
       std::string&& bid_request) const
       /*throw(InvalidParamException, Exception)*/;
 
+    // bid_request must outlive the parsed fields in request_info and context.
+    void fill_by_openrtb_request_view(
+      RequestInfo& request_info, JsonProcessingContext& context, std::string_view bid_request)
+      const;
+
     bool
     fill_adid(std::string_view source_id) const noexcept;
 
@@ -720,11 +725,11 @@ namespace AdServer::Bidding
     use_external_user_id_(std::string_view external_user_id)
       const noexcept;
 
-    void
+    const HTTP::HTTPAddress&
     select_referer_(
       RequestInfo& request_info,
       const JsonProcessingContext& context,
-      HTTP::HTTPAddress& referer) const
+      HTTP::HTTPAddress& site_name_url) const
       /*throw(eh::Exception)*/;
 
     std::string

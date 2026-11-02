@@ -404,7 +404,7 @@ namespace FrontendCommons
   redirect(const String::SubString& url, HttpResponse& response)
     /*throw(eh::Exception)*/
   {
-    response.add_header_nocopy_name(String::SubString("Location"), url.str());
+    response.add_header_nocopy_name(String::SubString("Location"), url);
     return 302; // HTTP_MOVED_TEMPORARILY; // HTTP_SEE_OTHER;
   }
 
@@ -543,6 +543,19 @@ namespace FrontendCommons
     }
   }
 
+  template<typename Traits, typename Allocator>
+  void normalize_abs_url(
+    const HTTP::HTTPAddress& url_address, std::basic_string<char, Traits, Allocator>& result,
+    unsigned long get_view_flags = HTTP::HTTPAddress::VW_FULL,
+    const String::SubString& prefix = HTTP::HTTP_PREFIX.str)
+  {
+    url_address.get_view(get_view_flags, result);
+    if (url_address.scheme().empty())
+    {
+      result.insert(0, prefix.data(), prefix.size());
+    }
+  }
+
   inline
   std::string
   normalize_abs_url(
@@ -628,7 +641,7 @@ namespace FrontendCommons
         //   mode is 'include'
         response.add_header_nocopy_name(
           String::SubString("Access-Control-Allow-Origin"),
-          origin.str());
+          origin);
       }
       else
       {

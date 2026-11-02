@@ -578,7 +578,8 @@ namespace AdServer::Bidding
       RequestInfo::AdSlotInfo& slot = request_info.ad_slots.back();
       RequestInfoFiller::init_adslot(slot);
       slot.ad_slot_id = i;
-      slot.ext_tag_id.assign(place.placement_id.data(), place.placement_id.size());
+      slot.ext_tag_id = request_info.hold_string(Generics::MonoString(
+        place.placement_id.data(), place.placement_id.size(), request_info.resource()));
       slot.fill_track_html = false;
       slot.passback = request_info.filter_request;
       slot.tag_visibility = 100;
