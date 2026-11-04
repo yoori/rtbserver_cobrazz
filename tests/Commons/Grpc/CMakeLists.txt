@@ -10,6 +10,9 @@ add_executable(BatchPartialResponseTest
   BatchPartialResponseTest.cpp
 )
 
+add_executable(BatchStreamFinishTest BatchStreamFinishTest.cpp)
+target_link_libraries(BatchStreamFinishTest PRIVATE Commons Generics GrpcBatch)
+
 add_executable(BatchCooperativeTest BatchCooperativeTest.cpp)
 target_link_libraries(BatchCooperativeTest PRIVATE PkgConfig::Jemalloc Commons Generics GrpcBatch)
 

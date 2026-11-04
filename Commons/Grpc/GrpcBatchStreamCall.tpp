@@ -741,6 +741,8 @@ namespace AdServer::Grpc
       }
       else if (client_closed_)
       {
+        // Finish completion clears finish_in_flight_, but closing must remain terminal.
+        closing_ = true;
         finish_in_flight_ = true;
         start_finish = true;
       }

@@ -37,6 +37,8 @@ namespace AdServer::Grpc
     void start_read_from_limiter() noexcept override;
 
   private:
+    friend struct GrpcBatchStreamCallTestAccess;
+
     struct BatchContext;
     using BatchContextPtr = std::shared_ptr<BatchContext>;
 
