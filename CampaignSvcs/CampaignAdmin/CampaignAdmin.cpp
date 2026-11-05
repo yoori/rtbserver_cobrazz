@@ -1864,9 +1864,9 @@ namespace
         reflection->GetRepeatedMessage(message, &field, index).ShortDebugString() :
         reflection->GetMessage(message, &field).ShortDebugString();
     case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-      return field.is_repeated() ?
+      return std::string(field.is_repeated() ?
         reflection->GetRepeatedEnum(message, &field, index)->name() :
-        reflection->GetEnum(message, &field)->name();
+        reflection->GetEnum(message, &field)->name());
     }
 
     return std::string();
