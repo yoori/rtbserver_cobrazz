@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <charconv>
+#include <cstring>
 #include <iostream>
 #include <limits>
 #include <string_view>
@@ -80,144 +81,218 @@ namespace
 
 namespace FCGI
 {
-  int
-  HttpRequestHolder::parse(const void* buf, unsigned long size)
+  void HttpRequestHolder::append_range_(
+    BufferQueue& queue, const Buffer& buffer, std::size_t offset, std::size_t size)
   {
-    buf_.assign(static_cast<const char*>(buf), size);
-    char* mutable_buf = const_cast<char*>(buf_.data());
-    const size_t mutable_size = size;
-
-    HttpRequest& request = http_request_;
-    request.set_method(HttpRequest::RM_GET);
-    request.set_uri(String::SubString());
-    request.set_args(String::SubString());
-    request.set_body(String::SubString());
-    request.set_headers(HTTP::SubHeaderList());
-    request.set_params(HTTP::ParamList());
-    request.set_server_name(String::SubString());
-    request.set_secure(false);
-    request.set_header_only(false);
-
-    tinyfcgi::const_message m(mutable_buf, mutable_size);
-
-    uint16_t id = 0;
-    bool need_more = true;
-
-    auto stdin_i = m.end();
-
-    HTTP::SubHeaderList headers;
-    for (auto i = m.begin(); i != m.end(); ++i)
+    if (!queue.empty() && queue.back().buffer == buffer &&
+      queue.back().offset + queue.back().size == offset)
     {
-      const tinyfcgi::header& h = *i;
+      queue.back().size += size;
+    }
+    else
+    {
+      queue.push_back(BufferRange{buffer, offset, size});
+    }
+  }
 
-      if (!h.valid())
+  std::string_view HttpRequestHolder::flatten_(BufferQueue& queue, std::string& storage)
+  {
+    if (queue.empty())
+    {
+      return {};
+    }
+
+    if (queue.size() == 1)
+    {
+      const auto& range = queue.front();
+      return std::string_view(range.buffer.get() + range.offset, range.size);
+    }
+
+    std::size_t size = 0;
+    for (const auto& range : queue)
+    {
+      size += range.size;
+    }
+    storage.clear();
+    storage.reserve(size);
+    for (const auto& range : queue)
+    {
+      storage.append(range.buffer.get() + range.offset, range.size);
+    }
+    queue.clear();
+    return storage;
+  }
+
+  int HttpRequestHolder::append(
+    const Buffer& buffer, std::size_t offset, std::size_t size, std::size_t& consumed_size)
+  {
+    consumed_size = 0;
+    auto& state = parse_state_;
+    while (state.result == PARSE_NEED_MORE)
+    {
+      if (state.header_size < state.header.size())
+      {
+        const auto count = std::min(state.header.size() - state.header_size, size - consumed_size);
+        if (count != 0)
+        {
+          std::memcpy(
+            state.header.data() + state.header_size, buffer.get() + offset + consumed_size, count);
+          state.header_size += count;
+          consumed_size += count;
+        }
+
+        if (state.header_size != state.header.size())
+        {
+          break;
+        }
+
+        const auto& header = state.header;
+        if (header[0] != FCGI_VERSION_1 ||
+            header[1] < FCGI_BEGIN_REQUEST || header[1] >= FCGI_MAXTYPE)
+        {
+          state.result = PARSE_INVALID_HEADER;
+          break;
+        }
+
+        const std::uint16_t id = (header[2] << 8) | header[3];
+        if (state.request_id == 0)
+        {
+          if (header[1] != FCGI_BEGIN_REQUEST)
+          {
+            state.result = PARSE_BEGIN_REQUEST_EXPECTED;
+            break;
+          }
+          state.request_id = id;
+        }
+
+        if (id == 0 || id != state.request_id)
+        {
+          state.result = PARSE_INVALID_ID;
+          break;
+        }
+
+        state.content_left = (header[4] << 8) | header[5];
+        state.padding_left = header[6];
+        state.end_request = header[1] == FCGI_STDIN && state.content_left == 0;
+      }
+
+      const auto count = std::min(state.content_left, size - consumed_size);
+      if (count != 0)
+      {
+        if (state.header[1] == FCGI_PARAMS)
+        {
+          append_range_(params_buffers_, buffer, offset + consumed_size, count);
+        }
+        else if (state.header[1] == FCGI_STDIN)
+        {
+          append_range_(body_buffers_, buffer, offset + consumed_size, count);
+        }
+        state.content_left -= count;
+        consumed_size += count;
+      }
+
+      if (state.content_left != 0)
+      {
+        break;
+      }
+
+      const auto padding = std::min(state.padding_left, size - consumed_size);
+      state.padding_left -= padding;
+      consumed_size += padding;
+      if (state.padding_left != 0)
+      {
+        break;
+      }
+
+      state.header_size = 0;
+      if (state.end_request)
+      {
+        state.result = finish_();
+      }
+    }
+    return state.result;
+  }
+
+  bool HttpRequestHolder::read_length_(std::string_view& data, std::size_t& length) noexcept
+  {
+    if (data.empty())
+    {
+      return false;
+    }
+
+    const auto first = static_cast<unsigned char>(data.front());
+    const std::size_t size = first & 0x80 ? 4 : 1;
+    if (data.size() < size)
+    {
+      return false;
+    }
+
+    length = first & 0x7f;
+    for (std::size_t i = 1; i < size; ++i)
+    {
+      length = (length << 8) | static_cast<unsigned char>(data[i]);
+    }
+    data.remove_prefix(size);
+    return true;
+  }
+
+  int HttpRequestHolder::finish_()
+  {
+    auto params = flatten_(params_buffers_, buf_);
+    HTTP::SubHeaderList headers;
+    while (!params.empty())
+    {
+      std::size_t name_size = 0;
+      std::size_t value_size = 0;
+      if (!read_length_(params, name_size) || !read_length_(params, value_size) ||
+        name_size > params.size() || value_size > params.size() - name_size)
       {
         return PARSE_INVALID_HEADER;
       }
 
-      if (id == 0)
+      const String::SubString name(params.data(), name_size);
+      params.remove_prefix(name_size);
+      const String::SubString value(params.data(), value_size);
+      params.remove_prefix(value_size);
+
+      if (name == QUERY_STRING)
       {
-        if (h.type != FCGI_BEGIN_REQUEST)
-        {
-          return PARSE_BEGIN_REQUEST_EXPECTED;
-        }
-        id = h.id();
+        http_request_.set_args(value);
       }
-      else if (id != h.id())
+      else if (name == REQUEST_URI)
       {
-        return PARSE_INVALID_ID;
+        http_request_.set_uri(value);
       }
-
-      if (h.type == FCGI_STDIN)
+      else if (name == REQUEST_METHOD)
       {
-        if (h.size() == 0)
+        if (value == GET || value == HEAD)
         {
-          need_more = false;
-          break;
+          http_request_.set_method(HttpRequest::RM_GET);
+          http_request_.set_header_only(value == HEAD);
         }
-
-        if (stdin_i == m.end())
+        else if (value == POST)
         {
-          stdin_i = i;
-        }
-        else
-        {
-          return PARSE_FRAGMENTED_STDIN;
-        }
-
-        auto next_i = i;
-        ++next_i;
-        if (next_i.valid() && next_i->valid() && next_i->type == FCGI_STDIN && next_i->size() > 0)
-        {
-          tinyfcgi::header* mh = (tinyfcgi::header*)&h;
-          mh->merge_next();
-          continue;
+          http_request_.set_method(HttpRequest::RM_POST);
         }
       }
-    }
-
-    if (need_more)
-    {
-      return PARSE_NEED_MORE;
-    }
-
-    if (stdin_i.valid())
-    {
-      request.set_body(stdin_i->str());
-    }
-
-    for (auto i = m.begin(); i != m.end(); ++i)
-    {
-      const tinyfcgi::header& h = *i;
-      if (h.type == FCGI_PARAMS)
+      else if (name == HTTPS)
       {
-        tinyfcgi::const_params params(h.str());
-        for (auto i = params.begin(); i != params.end(); ++i)
-        {
-          String::SubString name, value;
-          i->read(name, value);
-
-          if (name == QUERY_STRING)
-          {
-            request.set_args(value);
-          }
-          else if (name == REQUEST_URI)
-          {
-            request.set_uri(value);
-          }
-          else if (name == REQUEST_METHOD)
-          {
-            if (value == GET)
-            {
-              request.set_method(HttpRequest::RM_GET);
-            }
-            else if (value == HEAD)
-            {
-              request.set_method(HttpRequest::RM_GET);
-              request.set_header_only(true);
-            }
-            else if (value == POST)
-            {
-              request.set_method(HttpRequest::RM_POST);
-            }
-          }
-          else if (name == HTTPS)
-          {
-            request.set_secure(true);
-            headers.push_back(HTTP::SubHeader(PASS_SECURE, PASS_SECURE_VALUE));
-          }
-          else if (name == REMOTE_ADDR)
-          {
-            headers.push_back(HTTP::SubHeader(PASS_REMOTE_ADDR, value));
-          }
-          else if (name.size() > 5 && name.compare(0, 5, "HTTP_") == 0)
-          {
-            headers.push_back(HTTP::SubHeader(name.substr(5), value));
-          }
-        }
+        http_request_.set_secure(true);
+        headers.push_back(HTTP::SubHeader(PASS_SECURE, PASS_SECURE_VALUE));
+      }
+      else if (name == REMOTE_ADDR)
+      {
+        headers.push_back(HTTP::SubHeader(PASS_REMOTE_ADDR, value));
+      }
+      else if (name.size() > 5 && name.compare(0, 5, "HTTP_") == 0)
+      {
+        headers.push_back(HTTP::SubHeader(name.substr(5), value));
       }
     }
-    request.set_headers(std::move(headers));
+    http_request_.set_headers(std::move(headers));
+
+    const auto body = flatten_(body_buffers_, body_buf_);
+    http_request_.set_body(String::SubString(body.data(), body.size()));
     return PARSE_OK;
   }
 }
@@ -252,8 +327,7 @@ namespace AdServer::Frontends
     WorkerStatsObject_var worker_stats_;
   };
 
-  class FCGIAcceptor::Connection:
-    public std::enable_shared_from_this<FCGIAcceptor::Connection>
+  class FCGIAcceptor::Connection: public std::enable_shared_from_this<FCGIAcceptor::Connection>
   {
   public:
     typedef boost::asio::local::stream_protocol::socket SocketType;
@@ -316,17 +390,15 @@ namespace AdServer::Frontends
     Logging::Logger*
     logger_i_() noexcept;
 
-    void
-    order_read_();
+    void order_read_();
 
     void
     order_write_();
 
-    bool
-    process_read_data_(size_t bytes_transferred);
+    bool process_read_data_(size_t bytes_transferred);
 
   private:
-    static const int READ_BUF_SIZE_ = 512 * 1024; // 512 Kb
+    static constexpr std::size_t READ_BUF_SIZE_ = 64 * 1024;
 
   private:
     Logging::Logger_var logger_;
@@ -340,9 +412,9 @@ namespace AdServer::Frontends
     std::atomic<int> active_;
 
     std::atomic<int> read_ordered_;
-    //unsigned char rbuf_[READ_BUF_SIZE_];
-    std::vector<unsigned char> rbuf_;
-    std::vector<unsigned char> full_rbuf_;
+    std::shared_ptr<char[]> read_buffer_;
+    std::size_t read_offset_ = 0;
+    FCGI::HttpRequestHolder_var request_holder_;
 
     std::atomic<int> write_ordered_;
     WriteBufSyncPolicy::Mutex send_bufs_lock_;
@@ -572,9 +644,7 @@ namespace AdServer::Frontends
       active_(0),
       read_ordered_(0),
       write_ordered_(0)
-  {
-    rbuf_.resize(READ_BUF_SIZE_);
-  }
+  {}
 
   FCGIAcceptor::Connection::~Connection() noexcept
   {
@@ -681,8 +751,7 @@ namespace AdServer::Frontends
     }
   }
 
-  void
-  FCGIAcceptor::Connection::order_read_()
+  void FCGIAcceptor::Connection::order_read_()
   {
     if (++read_ordered_ == 1)
     {
@@ -692,9 +761,21 @@ namespace AdServer::Frontends
         return;
       }
 
+      // Retained ranges stay immutable; only an unshared buffer can be reused from its start.
+      if (read_buffer_ && read_buffer_.use_count() == 1)
+      {
+        read_offset_ = 0;
+      }
+
+      if (!read_buffer_ || read_offset_ == READ_BUF_SIZE_)
+      {
+        read_buffer_.reset(new char[READ_BUF_SIZE_]);
+        read_offset_ = 0;
+      }
+
       auto self = shared_from_this();
       socket_.async_read_some(
-        boost::asio::buffer(&rbuf_[0], READ_BUF_SIZE_),
+        boost::asio::buffer(read_buffer_.get() + read_offset_, READ_BUF_SIZE_ - read_offset_),
         boost::asio::bind_executor(
           strand_,
           [self](const boost::system::error_code& error, size_t bytes_transferred)
@@ -783,57 +864,46 @@ namespace AdServer::Frontends
     }
   }
 
-  bool
-  FCGIAcceptor::Connection::process_read_data_(size_t bytes_transferred)
+  bool FCGIAcceptor::Connection::process_read_data_(size_t bytes_transferred)
   {
-    const unsigned char* data_start;
-    const unsigned char* data_end;
-
-    if (!full_rbuf_.empty())
+    const std::size_t end = read_offset_ + bytes_transferred;
+    while (read_offset_ != end)
     {
-      // previous read didn't give full request
-      full_rbuf_.insert(full_rbuf_.end(), &*rbuf_.begin(), &*(rbuf_.begin() + bytes_transferred));
-      data_start = &full_rbuf_[0];
-      data_end = &full_rbuf_[0] + full_rbuf_.size();
+      if (!request_holder_)
+      {
+        request_holder_ = new FCGI::HttpRequestHolder();
+      }
+
+      std::size_t consumed_size = 0;
+      const int parse_res = request_holder_->append(
+        read_buffer_, read_offset_, end - read_offset_, consumed_size);
+      read_offset_ += consumed_size;
+
+      switch (parse_res)
+      {
+      case FCGI::PARSE_OK:
+        {
+          FCGI::BaseHttpResponseWriter_var response_writer(
+            new FCGIResponseWriter(shared_from_this()));
+          frontend_->handle_request_noparams(
+            std::move(request_holder_), std::move(response_writer));
+          break;
+        }
+      case FCGI::PARSE_NEED_MORE:
+        return true;
+      case FCGI::PARSE_INVALID_HEADER:
+        logger_i_()->info(String::SubString("invalid fcgi header"), Aspect::WORKER);
+        return false;
+      case FCGI::PARSE_BEGIN_REQUEST_EXPECTED:
+        logger_i_()->info(String::SubString("begin request expected"), Aspect::WORKER);
+        return false;
+      case FCGI::PARSE_INVALID_ID:
+        logger_i_()->info(String::SubString("invalid FCGI header id"), Aspect::WORKER);
+        return false;
+      default:
+        return false;
+      }
     }
-    else
-    {
-      data_start = &*rbuf_.begin();
-      data_end = &*(rbuf_.begin() + bytes_transferred);
-    }
-
-    // try parse request
-    FCGI::HttpRequestHolder_var request_holder(new FCGI::HttpRequestHolder());
-
-    int parse_res = request_holder->parse(data_start, data_end - data_start);
-
-    if (parse_res == FCGI::PARSE_OK)
-    {
-      FCGI::BaseHttpResponseWriter_var response_writer(new FCGIResponseWriter(shared_from_this()));
-
-      // process
-      frontend_->handle_request_noparams(std::move(request_holder), std::move(response_writer));
-    }
-
-    switch(parse_res)
-    {
-    case FCGI::PARSE_NEED_MORE:
-      //logger_i_()->warning(String::SubString("getting PARSE_NEED_MORE"), Aspect::WORKER);
-      break;
-
-    case FCGI::PARSE_INVALID_HEADER:
-      logger_i_()->info(String::SubString("invalid fcgi header"), Aspect::WORKER);
-      return false;
-    case FCGI::PARSE_BEGIN_REQUEST_EXPECTED:
-      logger_i_()->info(String::SubString("begin request expected"), Aspect::WORKER);
-      return false;
-    case FCGI::PARSE_INVALID_ID:
-      logger_i_()->info(String::SubString("invalid FCGI header id"), Aspect::WORKER);
-      return false;
-    case FCGI::PARSE_FRAGMENTED_STDIN:
-      return false;
-    }
-
     return true;
   }
 
