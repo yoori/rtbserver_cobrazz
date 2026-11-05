@@ -1,8 +1,14 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <string_view>
+
+#include <boost/container/small_vector.hpp>
 
 #include <String/SubString.hpp>
 #include <String/StringManip.hpp>
@@ -163,8 +169,12 @@ namespace FCGI
   class HttpRequestHolder: public ReferenceCounting::AtomicImpl
   {
   public:
-    int
-    parse(const void* buf, unsigned long size);
+    using Buffer = std::shared_ptr<const char[]>;
+
+    // Retains payload ranges; callers must not overwrite them while the request is alive.
+    // consumed_size counts bytes from this call, including an incomplete request's bytes.
+    int append(
+      const Buffer& buffer, std::size_t offset, std::size_t size, std::size_t& consumed_size);
 
     const HttpRequest&
     request() const
@@ -184,7 +194,39 @@ namespace FCGI
 
   protected:
     std::string buf_;
+    std::string body_buf_;
     HttpRequest http_request_;
+
+  private:
+    struct BufferRange
+    {
+      Buffer buffer;
+      std::size_t offset;
+      std::size_t size;
+    };
+
+    using BufferQueue = boost::container::small_vector<BufferRange, 4>;
+
+    struct ParseState
+    {
+      std::array<unsigned char, 8> header{};
+      std::size_t header_size = 0;
+      std::size_t content_left = 0;
+      std::size_t padding_left = 0;
+      std::uint16_t request_id = 0;
+      int result = PARSE_NEED_MORE;
+      bool end_request = false;
+    };
+
+    static void append_range_(
+      BufferQueue& queue, const Buffer& buffer, std::size_t offset, std::size_t size);
+    static std::string_view flatten_(BufferQueue& queue, std::string& storage);
+    static bool read_length_(std::string_view& data, std::size_t& length) noexcept;
+    int finish_();
+
+    ParseState parse_state_;
+    BufferQueue params_buffers_;
+    BufferQueue body_buffers_;
   };
 
   typedef ReferenceCounting::SmartPtr<HttpRequestHolder>
