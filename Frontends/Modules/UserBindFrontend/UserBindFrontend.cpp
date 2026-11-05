@@ -1260,8 +1260,9 @@ namespace AdServer
     }
 
     google::protobuf::Arena arena;
-    auto* history_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MatchRequest>(&arena);
+    auto* history_match_request =
+      google::protobuf::Arena::Create<adserver::user_info_svcs::user_info_manager::MatchRequest>(
+        &arena);
     auto* match_params = history_match_request->mutable_match_params();
     match_params->set_use_empty_profile(false);
     match_params->set_silent_match(false);

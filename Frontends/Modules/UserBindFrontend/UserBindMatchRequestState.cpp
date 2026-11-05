@@ -147,8 +147,9 @@ namespace AdServer
         &StatHolder::add_user_bind_match_channel_request,
         &StatHolder::complete_user_bind_match_channel_request);
       google::protobuf::Arena arena;
-      auto* channel_request = google::protobuf::Arena::CreateMessage<
-        adserver::channel_svcs::channel_server::MatchRequest>(&arena);
+      auto* channel_request =
+        google::protobuf::Arena::Create<adserver::channel_svcs::channel_server::MatchRequest>(
+          &arena);
       channel_request->set_non_strict_word_match(false);
       channel_request->set_non_strict_url_match(false);
       channel_request->set_return_negative(false);
@@ -182,14 +183,16 @@ namespace AdServer
     }
 
     google::protobuf::Arena arena;
-    auto* history_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MatchRequest>(&arena);
+    auto* history_match_request =
+      google::protobuf::Arena::Create<adserver::user_info_svcs::user_info_manager::MatchRequest>(
+        &arena);
     fill_history_match_request_(*history_match_request);
 
     if (!merge_user_id_.is_null())
     {
-      auto* get_profile_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(&arena);
+      auto* get_profile_request =
+        google::protobuf::Arena::Create<
+          adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(&arena);
       get_profile_request->set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
       get_profile_request->set_temporary(false);
       auto* profile_request = get_profile_request->mutable_profile_request();
@@ -214,8 +217,9 @@ namespace AdServer
 
         if (get_profile_result.response.found())
         {
-          auto* merge_request = google::protobuf::Arena::CreateMessage<
-            adserver::user_info_svcs::user_info_manager::MergeRequest>(&arena);
+          auto* merge_request =
+            google::protobuf::Arena::Create<
+              adserver::user_info_svcs::user_info_manager::MergeRequest>(&arena);
           *merge_request->mutable_user_info() = history_match_request->user_info();
           *merge_request->mutable_match_params() = history_match_request->match_params();
           *merge_request->mutable_merge_user_profile() = get_profile_result.response.user_profile();
@@ -234,8 +238,9 @@ namespace AdServer
             }
           }
 
-          auto* remove_request = google::protobuf::Arena::CreateMessage<
-            adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(&arena);
+          auto* remove_request =
+            google::protobuf::Arena::Create<
+              adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(&arena);
           remove_request->set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
           {
             StatStageGuard stat_guard(
@@ -279,8 +284,9 @@ namespace AdServer
   UserBindMatchRequestState::co_campaign_() noexcept
   {
     google::protobuf::Arena arena;
-    auto* process_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(&arena);
+    auto* process_match_request =
+      google::protobuf::Arena::Create<
+        adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(&arena);
     frontend_->fill_match_request_info_(
       *process_match_request->mutable_match_request_info(),
       result_user_id_,

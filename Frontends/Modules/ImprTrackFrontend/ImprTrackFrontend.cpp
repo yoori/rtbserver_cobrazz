@@ -905,8 +905,9 @@ namespace AdServer::ImprTrack
     {
       // save request_info.external_user_id => user_id mapping
       google::protobuf::Arena add_user_request_arena;
-      auto* add_user_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_bind::AddUserIdRequest>(&add_user_request_arena);
+      auto* add_user_request =
+        google::protobuf::Arena::Create<adserver::user_info_svcs::user_bind::AddUserIdRequest>(
+          &add_user_request_arena);
       add_user_request->set_id(request_info.external_user_id);
       add_user_request->set_user_id(GrpcAlgs::pack_user_id(result.user_id));
       add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
@@ -929,8 +930,9 @@ namespace AdServer::ImprTrack
     // request_info.external_user_id isn't empty and user_id isn't defined
     // resolve user_id by request_info.external_user_id
     google::protobuf::Arena get_request_arena;
-    auto* get_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_bind::GetUserIdRequest>(&get_request_arena);
+    auto* get_request =
+      google::protobuf::Arena::Create<adserver::user_info_svcs::user_bind::GetUserIdRequest>(
+        &get_request_arena);
     get_request->set_id(request_info.external_user_id);
     get_request->set_timestamp(GrpcAlgs::pack_time(request_info.time));
     get_request->set_silent(true);
@@ -1136,8 +1138,9 @@ namespace AdServer::ImprTrack
     noexcept
   {
     google::protobuf::Arena channel_request_arena;
-    auto* channel_request = google::protobuf::Arena::CreateMessage<
-      adserver::channel_svcs::channel_server::MatchRequest>(&channel_request_arena);
+    auto* channel_request =
+      google::protobuf::Arena::Create<adserver::channel_svcs::channel_server::MatchRequest>(
+        &channel_request_arena);
     channel_request->set_non_strict_word_match(false);
     channel_request->set_non_strict_url_match(false);
     channel_request->set_return_negative(false);
@@ -1229,8 +1232,10 @@ namespace AdServer::ImprTrack
       if (state->user_id != AdServer::Commons::PROBE_USER_ID)
       {
         google::protobuf::Arena history_match_request_arena;
-        auto* history_match_request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_info_manager::MatchRequest>(&history_match_request_arena);
+        auto* history_match_request =
+          google::protobuf::Arena::Create<
+            adserver::user_info_svcs::user_info_manager::MatchRequest>(
+              &history_match_request_arena);
         fill_history_match_request(*history_match_request, state->user_id);
         auto match_result = co_await user_info_client_coro_->co_match(*history_match_request);
 
@@ -1260,16 +1265,18 @@ namespace AdServer::ImprTrack
         !state->resolved_cookie_user_id.is_null())
       {
         google::protobuf::Arena cookie_match_request_arena;
-        auto* cookie_match_request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_info_manager::MatchRequest>(&cookie_match_request_arena);
+        auto* cookie_match_request =
+          google::protobuf::Arena::Create<
+            adserver::user_info_svcs::user_info_manager::MatchRequest>(&cookie_match_request_arena);
         fill_history_match_request(*cookie_match_request, state->resolved_cookie_user_id);
         co_await user_info_client_coro_->co_match(*cookie_match_request);
       }
     }
 
     google::protobuf::Arena request_arena;
-    auto* request = google::protobuf::Arena::CreateMessage<
-      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(&request_arena);
+    auto* request =
+      google::protobuf::Arena::Create<
+        adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(&request_arena);
 
     fill_match_request_info_(*request->mutable_match_request_info(), *state);
 

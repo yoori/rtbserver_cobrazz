@@ -215,7 +215,7 @@ namespace AdServer::Grpc
           batch_response.status_message());
 
         auto arena = std::make_shared<google::protobuf::Arena>();
-        auto* response = google::protobuf::Arena::CreateMessage<Response>(arena.get());
+        auto* response = google::protobuf::Arena::Create<Response>(arena.get());
         if (status.ok() && !response->ParseFromString(batch_response.payload()))
         {
           const auto message = AdServer::Grpc::Detail::make_parse_error_message_(
