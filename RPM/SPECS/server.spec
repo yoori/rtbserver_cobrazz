@@ -25,8 +25,8 @@
 %define __net_snmp_ver_req      5.8-25
 %define __libevent_ver_req      2.1.8-5.el8
 %define __libpq_ver_req         13.20
-#define __protobuf_ver_req      3.6.1-4
-%define __protobuf_ver_req      25.9-ssv4.el8
+%define __protobuf_ver_req      36.2-ssv8.el8
+%define __grpc_ver_req          1.80.0-ssv8.el8
 %define __zeromq_ver_req        4.3.4
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
@@ -127,10 +127,8 @@ BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
 #BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
-BuildRequires: protobuf-devel = 25.9
-BuildRequires: protobuf-compiler = 25.9
-BuildRequires: grpc-devel = 1.80.0-ssv4.el8
-BuildRequires: grpc-plugins = 1.80.0-ssv4.el8
+BuildRequires: grpc-devel = %{__grpc_ver_req}
+BuildRequires: grpc-plugins = %{__grpc_ver_req}
 BuildRequires: jemalloc-devel = %__jemalloc_ver_req
 
 Requires: protobuf = %{__protobuf_ver_req}
@@ -159,8 +157,7 @@ Requires: folly = %__folly_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 1:2.1.2-8.el8
 Requires: cryptopp libatomic libev
-Requires: protobuf = 25.9
-Requires: grpc = 1.80.0-ssv4.el8
+Requires: grpc = %{__grpc_ver_req}
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format

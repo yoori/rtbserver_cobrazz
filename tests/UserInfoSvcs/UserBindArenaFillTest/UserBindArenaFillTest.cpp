@@ -157,7 +157,7 @@ namespace
     std::uint64_t checksum = 0;
     for (unsigned long i = 0; i < count; ++i)
     {
-      auto* response = google::protobuf::Arena::CreateMessage<GetUserIdResponse>(&arena);
+      auto* response = google::protobuf::Arena::Create<GetUserIdResponse>(&arena);
       fill_response(*response, i);
       checksum += response_checksum(*response);
     }

@@ -1125,8 +1125,8 @@ namespace AdServer::Bidding
             try
             {
               google::protobuf::Arena get_request_arena;
-              auto* get_request = google::protobuf::Arena::CreateMessage<
-                UBM::GetUserIdRequest>(&get_request_arena);
+              auto* get_request =
+                google::protobuf::Arena::Create<UBM::GetUserIdRequest>(&get_request_arena);
               get_request->set_id(external_user_ids[get_index]);
               get_request->set_timestamp(GrpcAlgs::pack_time(request_info.current_time));
               get_request->set_silent(false);
@@ -1451,8 +1451,9 @@ namespace AdServer::Bidding
         try
         {
           google::protobuf::Arena channel_request_arena;
-          auto* channel_request = google::protobuf::Arena::CreateMessage<
-            adserver::channel_svcs::channel_server::MatchRequest>(&channel_request_arena);
+          auto* channel_request =
+            google::protobuf::Arena::Create<adserver::channel_svcs::channel_server::MatchRequest>(
+              &channel_request_arena);
           channel_request->set_non_strict_word_match(false);
           channel_request->set_non_strict_url_match(false);
           channel_request->set_return_negative(false);
@@ -1672,7 +1673,7 @@ namespace AdServer::Bidding
           typedef std::set<ChannelMatch> ChannelMatchSet;
           google::protobuf::Arena history_match_request_arena;
           auto* history_match_request =
-            google::protobuf::Arena::CreateMessage<
+            google::protobuf::Arena::Create<
               adserver::user_info_svcs::user_info_manager::MatchRequest>(
                 &history_match_request_arena);
           auto* user_info = history_match_request->mutable_user_info();
@@ -1843,8 +1844,7 @@ namespace AdServer::Bidding
 
       google::protobuf::Arena campaign_request_arena;
       auto* campaign_request =
-        google::protobuf::Arena::CreateMessage<PB::GetCampaignCreativeRequest>(
-          &campaign_request_arena);
+        google::protobuf::Arena::Create<PB::GetCampaignCreativeRequest>(&campaign_request_arena);
 
       prepare_get_campaign_creative_request_(
         *campaign_request,
@@ -2121,8 +2121,9 @@ namespace AdServer::Bidding
         }
 
         google::protobuf::Arena request_arena;
-        auto* request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest>(&request_arena);
+        auto* request =
+          google::protobuf::Arena::Create<
+            adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest>(&request_arena);
         request->set_user_id(GrpcAlgs::pack_user_id(user_id));
         request->set_time(GrpcAlgs::pack_time(now));
         request->set_request_id(ad_slot_result.request_id);

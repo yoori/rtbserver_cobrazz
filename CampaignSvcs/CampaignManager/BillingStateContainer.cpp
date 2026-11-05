@@ -642,8 +642,7 @@ namespace AdServer::CampaignSvcs
     static const char* FUN = "BillingStateContainer::Impl::co_check_available_bid()";
 
     google::protobuf::Arena request_arena;
-    auto* check_bid_info = google::protobuf::Arena::CreateMessage<
-      Proto::CheckBidRequest>(&request_arena);
+    auto* check_bid_info = google::protobuf::Arena::Create<Proto::CheckBidRequest>(&request_arena);
     fill_bid_(
       *check_bid_info->mutable_bid(),
       now,
@@ -816,8 +815,7 @@ namespace AdServer::CampaignSvcs
     static const char* FUN = "BillingStateContainer::Impl::co_confirm_bid()";
 
     google::protobuf::Arena request_arena;
-    auto* confirm_bid_info = google::protobuf::Arena::CreateMessage<
-      Proto::ConfirmBidInfo>(&request_arena);
+    auto* confirm_bid_info = google::protobuf::Arena::Create<Proto::ConfirmBidInfo>(&request_arena);
     fill_bid_(
       *confirm_bid_info->mutable_bid(),
       now,
@@ -870,8 +868,8 @@ namespace AdServer::CampaignSvcs
         continue;
       }
 
-      auto* confirm_bid_request = google::protobuf::Arena::CreateMessage<
-        Proto::ConfirmBidRequest>(&request_arena);
+      auto* confirm_bid_request =
+        google::protobuf::Arena::Create<Proto::ConfirmBidRequest>(&request_arena);
       *confirm_bid_request->mutable_bid() = *confirm_bid_info;
 
       billing_request_params = confirm_bid_request_params_(

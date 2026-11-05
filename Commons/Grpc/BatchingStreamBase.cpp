@@ -959,7 +959,7 @@ namespace AdServer::Grpc
     }
 
     write_arena_.Reset();
-    auto* write_batch = google::protobuf::Arena::CreateMessage<BatchRequest>(&write_arena_);
+    auto* write_batch = google::protobuf::Arena::Create<BatchRequest>(&write_arena_);
     std::vector<PendingRequest> accepted_requests;
     accepted_requests.reserve(pending_batch.size());
     std::optional<std::vector<std::pair<PendingRequest, Generics::Time>>> timed_out_requests;
@@ -1227,7 +1227,7 @@ namespace AdServer::Grpc
   {
     const auto operation_start = grpc_queue_->execute_result([this]() mutable {
       auto response_arena = std::make_unique<google::protobuf::Arena>();
-      auto* response = google::protobuf::Arena::CreateMessage<BatchResponse>(response_arena.get());
+      auto* response = google::protobuf::Arena::Create<BatchResponse>(response_arena.get());
       auto read_tag = std::make_unique<ReadTag>(
         shared_from_this(),
         std::move(response_arena),

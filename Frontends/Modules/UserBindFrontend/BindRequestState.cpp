@@ -49,8 +49,9 @@ namespace AdServer
         }
 
         google::protobuf::Arena arena;
-        auto* add_user_request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_bind::AddUserIdRequest>(&arena);
+        auto* add_user_request =
+          google::protobuf::Arena::Create<adserver::user_info_svcs::user_bind::AddUserIdRequest>(
+            &arena);
         add_user_request->set_id(request_info->external_id);
         add_user_request->set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
         add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
@@ -91,8 +92,9 @@ namespace AdServer
             }
 
             google::protobuf::Arena arena;
-            auto* get_request = google::protobuf::Arena::CreateMessage<
-              adserver::user_info_svcs::user_bind::GetUserIdRequest>(&arena);
+            auto* get_request =
+              google::protobuf::Arena::Create<
+                adserver::user_info_svcs::user_bind::GetUserIdRequest>(&arena);
             get_request->set_id(external_ids[index].id);
             get_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
             get_request->set_silent(true);
@@ -153,8 +155,9 @@ namespace AdServer
           }
 
           google::protobuf::Arena arena;
-          auto* add_user_request = google::protobuf::Arena::CreateMessage<
-            adserver::user_info_svcs::user_bind::AddUserIdRequest>(&arena);
+          auto* add_user_request =
+            google::protobuf::Arena::Create<adserver::user_info_svcs::user_bind::AddUserIdRequest>(
+              &arena);
           add_user_request->set_id(external_id);
           add_user_request->set_user_id(GrpcAlgs::pack_user_id(
             !opted_out ? result_user_id : Commons::UserId()));
@@ -247,8 +250,9 @@ namespace AdServer
         }
 
         google::protobuf::Arena arena;
-        auto* bind_request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_bind::AddBindRequestRequest>(&arena);
+        auto* bind_request =
+          google::protobuf::Arena::Create<
+            adserver::user_info_svcs::user_bind::AddBindRequestRequest>(&arena);
         bind_request->set_request_id(dns_bind_request_id);
         bind_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
         for (const auto& user_id : user_ids)

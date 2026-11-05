@@ -186,7 +186,7 @@ namespace
 
     BatchResponse* create_response() override
     {
-      return google::protobuf::Arena::CreateMessage<BatchResponse>(&arena_);
+      return google::protobuf::Arena::Create<BatchResponse>(&arena_);
     }
 
     void publish_response(BatchResponse* response) noexcept override

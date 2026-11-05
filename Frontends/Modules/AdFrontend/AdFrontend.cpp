@@ -991,9 +991,10 @@ namespace AdServer
 
     TimeGuard user_merge_time_metering;
     google::protobuf::Arena get_profile_request_arena;
-    auto* get_profile_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(
-        &get_profile_request_arena);
+    auto* get_profile_request =
+      google::protobuf::Arena::Create<
+        adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(
+          &get_profile_request_arena);
     get_profile_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
     get_profile_request->set_temporary(merge_temp);
     auto* profile_request = get_profile_request->mutable_profile_request();
@@ -1044,9 +1045,10 @@ namespace AdServer
     if (context->request_info.remove_merged_uid)
     {
       google::protobuf::Arena remove_request_arena;
-      auto* remove_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(
-          &remove_request_arena);
+      auto* remove_request =
+        google::protobuf::Arena::Create<
+          adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(
+            &remove_request_arena);
       remove_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
       auto remove_result = co_await user_info_client_coro_->co_remove_user_profile(*remove_request);
       if (!remove_result.status.ok())
@@ -1076,8 +1078,9 @@ namespace AdServer
     }
 
     google::protobuf::Arena merge_request_arena;
-    auto* merge_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MergeRequest>(&merge_request_arena);
+    auto* merge_request =
+      google::protobuf::Arena::Create<adserver::user_info_svcs::user_info_manager::MergeRequest>(
+        &merge_request_arena);
     auto* user_info = merge_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(context->request_info.client_id));
     user_info->set_last_colo_id(context->request_info.last_colo_id);
@@ -1248,8 +1251,9 @@ namespace AdServer
       AdFrontendStat::Stage::HistoryMatch);
 
     google::protobuf::Arena history_match_request_arena;
-    auto* history_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MatchRequest>(&history_match_request_arena);
+    auto* history_match_request =
+      google::protobuf::Arena::Create<adserver::user_info_svcs::user_info_manager::MatchRequest>(
+        &history_match_request_arena);
     auto* user_info = history_match_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info.client_id));
     user_info->set_last_colo_id(request_info.last_colo_id);
@@ -1563,8 +1567,9 @@ namespace AdServer
     try
     {
       google::protobuf::Arena channel_request_arena;
-      auto* channel_request = google::protobuf::Arena::CreateMessage<
-        adserver::channel_svcs::channel_server::MatchRequest>(&channel_request_arena);
+      auto* channel_request =
+        google::protobuf::Arena::Create<adserver::channel_svcs::channel_server::MatchRequest>(
+          &channel_request_arena);
       *channel_request = get_empty_matching_request();
       AdServer::Grpc::ResponseHolder<
         adserver::channel_svcs::channel_server::MatchResponse>
@@ -2084,8 +2089,8 @@ namespace AdServer
     try
     {
       google::protobuf::Arena request_arena;
-      auto* request = google::protobuf::Arena::CreateMessage<
-        CM::GetCampaignCreativeRequest>(&request_arena);
+      auto* request =
+        google::protobuf::Arena::Create<CM::GetCampaignCreativeRequest>(&request_arena);
       request_campaign_manager_(
         passback_info,
         log_as_test,

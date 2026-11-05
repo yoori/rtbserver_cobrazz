@@ -22,7 +22,7 @@ namespace AdServer::Grpc
 
     Response* create_response() override
     {
-      return google::protobuf::Arena::CreateMessage<Response>(&response_arena_storage);
+      return google::protobuf::Arena::Create<Response>(&response_arena_storage);
     }
 
     void publish_response(Response* response) noexcept override
@@ -263,7 +263,7 @@ namespace AdServer::Grpc
     auto context = std::make_shared<BatchContext>();
     context->owner = this->shared_from_this();
     context->request_arena.Reset();
-    context->request = google::protobuf::Arena::CreateMessage<Request>(&context->request_arena);
+    context->request = google::protobuf::Arena::Create<Request>(&context->request_arena);
     auto* tag = new ReadTag(this->shared_from_this(), context);
     responder_.Read(context->request, tag);
     return true;

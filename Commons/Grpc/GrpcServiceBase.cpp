@@ -829,8 +829,8 @@ namespace AdServer::Grpc
       if (state->batch_response_arena)
       {
         state->item_responses.emplace_back(
-          google::protobuf::Arena::CreateMessage<
-            adserver::grpc::BatchResponseItem>(state->batch_response_arena));
+          google::protobuf::Arena::Create<adserver::grpc::BatchResponseItem>(
+            state->batch_response_arena));
       }
       else
       {
@@ -1025,8 +1025,7 @@ namespace AdServer::Grpc
     for (std::size_t i = 0; i < batch_size; ++i)
     {
       state->item_responses.emplace_back(
-        google::protobuf::Arena::CreateMessage<
-          adserver::grpc::BatchResponseItem>(&state->response_arena));
+        google::protobuf::Arena::Create<adserver::grpc::BatchResponseItem>(&state->response_arena));
     }
 
     state->lanes.reserve(split);
