@@ -17,6 +17,8 @@ Example:
 
 The script sends the request in a loop until interrupted with Ctrl-C.
 Set CHECK_PERF_LIMIT=<count> to stop after a fixed number of requests.
+Stage failures are printed as <host> : <failures> / <calls to this host> fails.
+Failed calls are excluded from completed and average time. Missing hosts appear as unknown.
 
 --random replaces user.id with a new user0000..user9999 value for each request.
 EOF
@@ -136,6 +138,38 @@ parse_response()
       return int(value * 100 + 0.5) / 100
     }
 
+    function normalize_host(value) {
+      value = trim(value)
+      sub(/;$/, "", value)
+      if (value ~ /^\[/) {
+        sub(/\]:[0-9]+$/, "]", value)
+      } else if (value ~ /^[^:]+:[0-9]+$/) {
+        sub(/:[0-9]+$/, "", value)
+      }
+      return value
+    }
+
+    /^[a-z_]+_server_id[[:space:]]*=/ {
+      name = $1
+      sub(/_server_id$/, "", name)
+      if (name in order) {
+        server[name] = normalize_host(substr($0, index($0, "=") + 1))
+      }
+      next
+    }
+
+    /^[a-z_]+_error_(source|code|endpoint|message)[[:space:]]*=/ {
+      name = $1
+      sub(/_error_(source|code|endpoint|message)$/, "", name)
+      if (name in order) {
+        failed[name] = 1
+        if ($1 == name "_error_endpoint") {
+          endpoint[name] = normalize_host(substr($0, index($0, "=") + 1))
+        }
+      }
+      next
+    }
+
     /^interrupted_step[[:space:]]*=/ {
       interrupted_step = normalize_step(substr($0, index($0, "=") + 1))
       next
@@ -159,6 +193,10 @@ parse_response()
     /^[a-z_]+_time[[:space:]]*=/ {
       name = $1
       sub(/_time$/, "", name)
+      if (name in order && $0 ~ /=>[[:space:]]*error/) {
+        failed[name] = 1
+      }
+
       value = parse_number(substr($0, index($0, "=") + 1))
       if (name in order && is_number(value)) {
         time[name] = value + 0
@@ -186,6 +224,16 @@ parse_response()
           print "START|" step "|" titles[step] "|" started_at[step]
         }
 
+        if (step in started_at || step in time || failed[step]) {
+          host = endpoint[step] ? endpoint[step] : server[step]
+          print "HOST|" step "|" (host ? host : "unknown") "|" (failed[step] ? 1 : 0)
+        }
+
+        if (failed[step]) {
+          print "FAIL|" step
+          continue
+        }
+
         if (interrupted_order && i >= interrupted_order) {
           continue
         }
@@ -195,7 +243,7 @@ parse_response()
         }
       }
 
-      if (interrupted_order && (interrupted_step in started_at)) {
+      if (interrupted_order && (interrupted_step in started_at) && !failed[interrupted_step]) {
         print "INTERRUPT|" interrupted_step "|" \
           titles[interrupted_step] "|" round_10ms(timeout - started_at[interrupted_step])
       }
@@ -230,6 +278,22 @@ print_stats()
       sum[step] += $4
       count[step] += 1
       reached[step] += 1
+      next
+    }
+
+    $1 == "HOST" {
+      step = $2
+      host = $3
+      if (!((step, host) in host_requests)) {
+        hosts[step, ++host_count[step]] = host
+      }
+      host_requests[step, host] += 1
+      host_failures[step, host] += $4
+      next
+    }
+
+    $1 == "FAIL" {
+      reached[$2] += 1
       next
     }
 
@@ -279,6 +343,14 @@ print_stats()
         } else {
           print "average time: n/a"
           print "completed: 0"
+        }
+
+        for (idx = 1; idx <= host_count[step]; ++idx) {
+          host = hosts[step, idx]
+          if (host_failures[step, host]) {
+            printf "%s : %d / %d fails\n", host, \
+              host_failures[step, host], host_requests[step, host]
+          }
         }
 
         total = reached[step]
