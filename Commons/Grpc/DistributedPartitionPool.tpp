@@ -146,20 +146,25 @@ namespace AdServer::Grpc
   }
 
   template<typename ClientType, typename ControllerClientType, typename Deleter>
-  void
-  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_object_()
+  void DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_object_()
   {
     deactivated_.store(true, std::memory_order_release);
     resolve_cond_.notify_all();
     task_runner_->deactivate_object();
+  }
+
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  void DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::wait_object_()
+  {
     task_runner_->wait_object();
-    deactivate_partitions_();
+    shutdown_partitions_();
     if constexpr (requires { client_deleter_.wait(); })
     {
       client_deleter_.wait();
     }
 
     Generics::CompositeActiveObject::deactivate_object_();
+    Generics::CompositeActiveObject::wait_object_();
   }
 
   template<typename ClientType, typename ControllerClientType, typename Deleter>
@@ -716,8 +721,7 @@ namespace AdServer::Grpc
   }
 
   template<typename ClientType, typename ControllerClientType, typename Deleter>
-  void
-  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_partitions_()
+  void DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::shutdown_partitions_()
     noexcept
   {
     std::vector<PartitionPtr> partitions;
@@ -791,10 +795,6 @@ namespace AdServer::Grpc
       try
       {
         ref_holder->client->wait_object();
-        if constexpr (requires { Deleter::complete(ref_holder->client); })
-        {
-          Deleter::complete(ref_holder->client);
-        }
       }
       catch (...)
       {

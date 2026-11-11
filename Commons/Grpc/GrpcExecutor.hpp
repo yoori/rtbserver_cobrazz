@@ -13,7 +13,7 @@
 
 #include <grpcpp/completion_queue.h>
 
-#include <Generics/ActiveObject.hpp>
+#include <Generics/SharedActiveObject.hpp>
 
 #include <Commons/DeferredDeletionQueue.hpp>
 
@@ -26,7 +26,7 @@ namespace AdServer::Grpc
   };
 
   class GrpcExecutor final
-    : public Generics::SimpleActiveObject
+    : public Generics::SharedActiveObject
   {
   public:
     class CQ final
@@ -63,8 +63,7 @@ namespace AdServer::Grpc
     bool execute(Functor&& functor);
 
   private:
-    void activate_object_() override;
-    void deactivate_object_() override;
+    void activate_shared_object_() override;
     void wait_object_() override;
 
   private:

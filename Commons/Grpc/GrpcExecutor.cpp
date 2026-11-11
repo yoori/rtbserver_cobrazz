@@ -56,8 +56,7 @@ namespace AdServer::Grpc
     return holders_[index % holders_.size()].queue;
   }
 
-  void
-  GrpcExecutor::activate_object_()
+  void GrpcExecutor::activate_shared_object_()
   {
     for (auto& holder : holders_)
     {
@@ -69,19 +68,13 @@ namespace AdServer::Grpc
     }
   }
 
-  void
-  GrpcExecutor::deactivate_object_()
+  void GrpcExecutor::wait_object_()
   {
-    deletion_queue_->drain();
     for (auto& holder : holders_)
     {
       holder.queue->shutdown();
     }
-  }
 
-  void
-  GrpcExecutor::wait_object_()
-  {
     for (auto& holder : holders_)
     {
       if (holder.thread.joinable())
@@ -89,8 +82,6 @@ namespace AdServer::Grpc
         holder.thread.join();
       }
     }
-
-    deletion_queue_->wait();
   }
 
   std::shared_ptr<AdServer::Commons::DeferredDeletionQueue>

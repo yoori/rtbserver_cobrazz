@@ -176,6 +176,7 @@ namespace AdServer::Grpc
     const AdServer::Grpc::BatchingOptions options_;
     const std::size_t max_streams_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    Generics::SharedActiveObject::ActivateGuard grpc_executor_guard_;
     std::shared_ptr<grpc::Channel> channel_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject> coalesce_runner_;
     BatchingQueuePtr batching_queue_;

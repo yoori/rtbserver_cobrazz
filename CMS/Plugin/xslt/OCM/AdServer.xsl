@@ -590,8 +590,9 @@
 
   <xsl:if test="count($cluster-path/configuration/cfg:cluster/cfg:central) > 0">
     <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%"
-      SMS_STATUS="%%SMS_STATUS2%%" status="%%STATUS_PRINT%%" timeout="600" cmd="{concat($script, ' %%HOST%% %%TYPE%%')}"
-      start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" status2_cmd="%%cmd%% db_status" env="{$env}">
+      status="%%STATUS_PRINT%%" timeout="600" cmd="{concat($script, ' %%HOST%% %%TYPE%%')}"
+      start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop"
+      status_cmd="%%cmd%% is_alive" env="{$env}">
       <xsl:call-template name="AdDBServices">
         <xsl:with-param name="cluster-path" select="$cluster-path"/>
         <xsl:with-param name="number" select="$number"/>

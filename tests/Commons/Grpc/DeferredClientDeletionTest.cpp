@@ -84,17 +84,8 @@ namespace
         method, request, std::move(callback), "invalid echo response");
     }
 
-    void deactivate_object() override
-    {
-      ++lifetime_->stops;
-      AsyncBatchingClientBase::deactivate_object();
-    }
-
-    void wait_object() override
-    {
-      ++lifetime_->waits;
-      AsyncBatchingClientBase::wait_object();
-    }
+    void deactivate_object() override;
+    void wait_object() override;
 
   private:
     static AdServer::Grpc::BatchingOptions options_()
@@ -108,7 +99,28 @@ namespace
     }
 
     const std::shared_ptr<Lifetime> lifetime_;
+    bool waited_ = false;
   };
+
+  void Client::deactivate_object()
+  {
+    if (active())
+    {
+      ++lifetime_->stops;
+    }
+
+    AsyncBatchingClientBase::deactivate_object();
+  }
+
+  void Client::wait_object()
+  {
+    AsyncBatchingClientBase::wait_object();
+    if (!waited_)
+    {
+      waited_ = true;
+      ++lifetime_->waits;
+    }
+  }
 
   using Deleter =
     AdServer::Commons::DeferredDeleter<Client, AdServer::Commons::ActiveObjectDeleter<Client>>;
@@ -181,7 +193,7 @@ namespace
 
   using Pool = AdServer::Grpc::RefPool<Holder>;
 
-  void test_last_pool_ref_in_cq()
+  void test_last_pool_ref_in_cq(bool stop_before_callback_returns)
   {
     Service service;
     grpc::ServerBuilder builder;
@@ -217,17 +229,21 @@ namespace
     executor->deletion_queue()->wait();
     require(lifetime->stops == 0, "old pool stopped a client still owned by the new pool");
 
+    std::promise<void> release_callback;
+    auto resume_callback = release_callback.get_future().share();
     std::promise<std::thread::id> response_thread;
     auto responded = response_thread.get_future();
     std::promise<void> pending_completed;
     auto completed = pending_completed.get_future();
     auto* borrowed = (*new_ref)->client.get();
     borrowed->submit("/test.Retire",
-      [ref = std::move(*new_ref), &response_thread, &service](const auto& status, auto response)
+      [ref = std::move(*new_ref), &response_thread, &service, resume_callback](
+        const auto& status, auto response)
       {
         require(status.ok() && response->batch_id() == 42, "first response failed");
         require(service.pending_received, "test needs another outstanding request");
         response_thread.set_value(std::this_thread::get_id());
+        resume_callback.wait();
       });
     new_ref.reset();
     borrowed->submit("/test.Pending", [&pending_completed](const auto& status, auto)
@@ -241,9 +257,27 @@ namespace
     executor->activate_object();
 
     const auto cq_thread = await(responded);
+    if (stop_before_callback_returns)
+    {
+      executor->deactivate_object();
+      executor->wait_object();
+      require(executor->execute([] {}), "executor stopped with a client in its callback");
+    }
+
+    release_callback.set_value();
     await(completed);
     require(await(deleted) != cq_thread, "client was destroyed on its completion queue");
     require(lifetime->stops == 1 && lifetime->waits == 1, "client shutdown must run once");
+
+    if (stop_before_callback_returns)
+    {
+      require(!executor->execute([] {}), "last client did not stop the executor");
+      runner->deactivate_object();
+      runner->wait_object();
+      server->Shutdown();
+      server->Wait();
+      return;
+    }
 
     auto stopped_lifetime = std::make_shared<Lifetime>();
     auto stopped_deleted = stopped_lifetime->deleted.get_future();
@@ -252,7 +286,6 @@ namespace
     stopped->activate_object();
     stopped->deactivate_object();
     stopped->wait_object();
-    Deleter::complete(stopped);
     stopped.reset();
     await(stopped_deleted);
     require(stopped_lifetime->stops == 1 && stopped_lifetime->waits == 1,
@@ -363,38 +396,135 @@ namespace
     }
 
   private:
-    void deactivate_object_() override
-    {
-      require(executor_->execute([] {}), "CQ closed before delayed client shutdown");
-      ++lifetime_->stops;
-    }
-
-    void wait_object_() override
-    {
-      ++lifetime_->waits;
-    }
+    void activate_object_() override;
+    void deactivate_object_() override;
+    void wait_object_() override;
 
     const std::shared_ptr<AdServer::Grpc::GrpcExecutor> executor_;
     const std::shared_ptr<Lifetime> lifetime_;
+    Generics::SharedActiveObject::ActivateGuard guard_;
   };
+
+  void ShutdownClient::activate_object_()
+  {
+    guard_ = executor_->activate_guard();
+  }
+
+  void ShutdownClient::deactivate_object_()
+  {
+    require(executor_->execute([] {}), "CQ closed before delayed client shutdown");
+    ++lifetime_->stops;
+  }
+
+  void ShutdownClient::wait_object_()
+  {
+    if (guard_)
+    {
+      require(executor_->execute([] {}), "CQ closed before client wait");
+      ++lifetime_->waits;
+      guard_.reset();
+    }
+  }
 
   using ShutdownDeleter = AdServer::Commons::DeferredDeleter<
     ShutdownClient, AdServer::Commons::ActiveObjectDeleter<ShutdownClient>>;
+
+  class ShutdownClientOwner final: public Generics::SimpleActiveObject
+  {
+  public:
+    explicit ShutdownClientOwner(std::shared_ptr<ShutdownClient> client);
+
+  private:
+    void activate_object_() override;
+    void deactivate_object_() override;
+    void wait_object_() override;
+
+    const std::shared_ptr<ShutdownClient> client_;
+  };
+
+  ShutdownClientOwner::ShutdownClientOwner(std::shared_ptr<ShutdownClient> client)
+    : client_(std::move(client))
+  {}
+
+  void ShutdownClientOwner::activate_object_()
+  {
+    client_->activate_object();
+  }
+
+  void ShutdownClientOwner::deactivate_object_()
+  {
+    client_->deactivate_object();
+  }
+
+  void ShutdownClientOwner::wait_object_()
+  {
+    client_->wait_object();
+  }
+
+  void test_two_phase_container_shutdown(bool executor_first)
+  {
+    auto executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    auto lifetime = std::make_shared<Lifetime>();
+    auto client = AdServer::Commons::make_shared_with_deleter<ShutdownClient>(
+      ShutdownDeleter(executor->deletion_queue()), executor, lifetime);
+    Generics::CompositeActiveObject container;
+    container.add_child_object(executor, executor_first);
+    container.add_child_object(std::make_shared<ShutdownClientOwner>(client), !executor_first);
+    container.activate_object();
+
+    auto stopping = std::async(std::launch::async, [&container]
+      {
+        container.deactivate_object();
+        container.wait_object();
+      });
+    await(stopping);
+    require(lifetime->stops == 1 && lifetime->waits >= 1, "client shutdown was not completed");
+    require(!executor->execute([] {}), "executor was not stopped after its clients");
+  }
+
+  void test_deactivate_executor_before_client()
+  {
+    auto executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    auto lifetime = std::make_shared<Lifetime>();
+    auto client = AdServer::Commons::make_shared_with_deleter<ShutdownClient>(
+      ShutdownDeleter(executor->deletion_queue()), executor, lifetime);
+    executor->activate_object();
+    client->activate_object();
+
+    auto stopping = std::async(std::launch::async, [executor, client]
+      {
+        executor->deactivate_object();
+        require(executor->execute([] {}), "deactivate closed CQ before client shutdown");
+        try
+        {
+          executor->activate_guard();
+          require(false, "deactivated executor accepted a new guard");
+        }
+        catch (const Generics::ActiveObject::NotSupported&)
+        {}
+
+        client->deactivate_object();
+        client->wait_object();
+        executor->wait_object();
+      });
+    await(stopping);
+    require(lifetime->stops == 1 && lifetime->waits == 1, "client shutdown was not completed");
+    require(!executor->execute([] {}), "executor was not stopped after its clients");
+  }
 
   struct PausedDeleter
   {
     ShutdownDeleter deleter;
     std::shared_ptr<DeletionPause> pause;
 
-    auto bind() const
-    {
-      return [bound = deleter.bind(), pause = pause](ShutdownClient* client)
-        {
-          pause->wait();
-          bound(client);
-        };
-    }
+    void operator()(ShutdownClient* client) const;
   };
+
+  void PausedDeleter::operator()(ShutdownClient* client) const
+  {
+    pause->wait();
+    deleter(client);
+  }
 
   void test_shutdown_waits_for_deletion_transfer(bool pause_in_holder)
   {
@@ -442,32 +572,12 @@ namespace
         executor->deactivate_object();
         executor->wait_object();
       });
-    bool registrations_closed = false;
-    const auto deadline = std::chrono::steady_clock::now() + 5s;
-    while (std::chrono::steady_clock::now() < deadline)
-    {
-      try
-      {
-        queue->register_deletion()->complete();
-      }
-      catch (const std::logic_error&)
-      {
-        registrations_closed = true;
-        break;
-      }
-
-      require(stopping.wait_for(0ms) != std::future_status::ready,
-        "executor shutdown missed a deletion not yet enqueued");
-      std::this_thread::sleep_for(1ms);
-    }
-
-    require(registrations_closed, "shutdown did not close deletion registration");
-    require(stopping.wait_for(20ms) == std::future_status::timeout,
-      "shutdown did not wait for deletion transfer");
+    await(stopping);
+    require(deleted.wait_for(0ms) == std::future_status::timeout,
+      "executor shutdown deleted a client during transfer");
     require(executor->execute([] {}), "CQ shut down while deletion transfer was paused");
     pause->release.set_value();
     await(dropping);
-    await(stopping);
     await(deleted);
     require(lifetime->stops == 1 && lifetime->waits == 1, "delayed shutdown must run once");
     require(!executor->execute([] {}), "executor did not shut down after deletion completed");
@@ -484,7 +594,6 @@ namespace
     client->activate_object();
     client->deactivate_object();
     client->wait_object();
-    ShutdownDeleter::complete(client);
     auto stopping = std::async(std::launch::async, [executor]
       {
         executor->deactivate_object();
@@ -499,42 +608,23 @@ namespace
     require(lifetime->stops == 1 && lifetime->waits == 1, "late deletion repeated shutdown");
   }
 
-  void test_registration_and_construction_failure()
+  void test_delete_deactivated_client()
   {
-    struct Object
-    {
-      Object(unsigned int& constructed, bool fail)
-      {
-        ++constructed;
-        if (fail)
-        {
-          throw std::runtime_error("constructor failed");
-        }
-      }
-    };
-
-    auto queue = std::make_shared<Queue>();
-    AdServer::Commons::DeferredDeleter<Object> deleter(queue);
-    unsigned int constructed = 0;
-    try
-    {
-      AdServer::Commons::make_shared_with_deleter<Object>(deleter, constructed, true);
-      require(false, "constructor did not fail");
-    }
-    catch (const std::runtime_error&)
-    {}
-
-    auto draining = std::async(std::launch::async, [queue] { queue->drain(); });
-    await(draining);
-    try
-    {
-      AdServer::Commons::make_shared_with_deleter<Object>(deleter, constructed, false);
-      require(false, "drained queue accepted a new object");
-    }
-    catch (const std::logic_error&)
-    {}
-
-    require(constructed == 1, "object was constructed before registering its deletion");
+    auto executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    executor->activate_object();
+    auto lifetime = std::make_shared<Lifetime>();
+    auto deleted = lifetime->deleted.get_future();
+    auto client = AdServer::Commons::make_shared_with_deleter<ShutdownClient>(
+      ShutdownDeleter(executor->deletion_queue()), executor, lifetime);
+    client->activate_object();
+    client->deactivate_object();
+    executor->deactivate_object();
+    executor->wait_object();
+    client.reset();
+    await(deleted);
+    require(lifetime->stops == 1 && lifetime->waits == 1,
+      "deleter skipped wait for a deactivated client");
+    require(!executor->execute([] {}), "deactivated client retained its executor guard");
   }
 
   struct PolicyCounters
@@ -560,11 +650,18 @@ namespace
     static PolicyCounters counters;
 
   private:
-    void wait_object_() override
+    void wait_object_() override;
+    bool waited_ = false;
+  };
+
+  void PolicyClient::wait_object_()
+  {
+    if (!waited_)
     {
+      waited_ = true;
       ++counters.waited;
     }
-  };
+  }
 
   PolicyCounters PolicyClient::counters;
 
@@ -627,8 +724,9 @@ namespace
     replace(2);
     pool->deactivate_object();
     pool->wait_object();
+    require(!pool->get_ref("key") && !pool->get_any_ref(), "stopped pool issued a ref");
     require(!(*old_ref)->client->active(), "shutdown missed a client from an old partition");
-    auto draining = std::async(std::launch::async, [queue] { queue->drain(); });
+    auto draining = std::async(std::launch::async, [queue] { queue->wait(); });
     await(draining);
     old_ref.reset();
     pool.reset();
@@ -643,10 +741,14 @@ int main()
   test_shutdown_waits_for_deletion_transfer(true);
   test_shutdown_waits_for_deletion_transfer(false);
   test_shutdown_with_retained_stopped_client();
-  test_registration_and_construction_failure();
+  test_two_phase_container_shutdown(false);
+  test_two_phase_container_shutdown(true);
+  test_deactivate_executor_before_client();
+  test_delete_deactivated_client();
   test_wait_includes_cascaded_deletions();
   test_queue_owned_by_deleted_object();
   test_partition_pool_policy();
-  test_last_pool_ref_in_cq();
+  test_last_pool_ref_in_cq(false);
+  test_last_pool_ref_in_cq(true);
   std::cout << "DeferredClientDeletionTest passed" << std::endl;
 }

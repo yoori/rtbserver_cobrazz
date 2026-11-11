@@ -84,6 +84,8 @@ namespace AdServer::ChannelSvcs
       GetCountChunksCallback callback) override;
 
   private:
+    friend struct ChannelDistributedGrpcClientTestAccess;
+
     using Client = ChannelServerGrpcAsyncBatchingClient;
     using ClientPtr = std::shared_ptr<Client>;
 

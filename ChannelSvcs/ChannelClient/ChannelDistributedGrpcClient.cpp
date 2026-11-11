@@ -461,17 +461,11 @@ namespace AdServer::ChannelSvcs
     task_runner_->enqueue_task(Generics::Task_var(new ResolveRefsTask(this)));
   }
 
-  void
-  ChannelDistributedGrpcClient::deactivate_object_()
+  void ChannelDistributedGrpcClient::deactivate_object_()
   {
-    deactivated_.store(true, std::memory_order_release);
-    resolve_cond_.notify_all();
-
-    task_runner_->deactivate_object();
-    task_runner_->wait_object();
-
     {
       std::unique_lock<std::shared_mutex> lock(pool_lock_);
+      deactivated_.store(true, std::memory_order_release);
       shutdown_pool_ = std::move(pool_);
       std::set<const ClientHolder*> seen_clients;
       for (auto& holder : current_client_holders_)
@@ -495,6 +489,9 @@ namespace AdServer::ChannelSvcs
       client_holders_.clear();
     }
 
+    resolve_cond_.notify_all();
+    task_runner_->deactivate_object();
+
     for (const auto& client_holder : shutdown_client_holders_)
     {
       client_holder->client->deactivate_object();
@@ -506,9 +503,10 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  void
-  ChannelDistributedGrpcClient::wait_object_()
+  void ChannelDistributedGrpcClient::wait_object_()
   {
+    task_runner_->wait_object();
+
     if (shutdown_pool_)
     {
       shutdown_pool_->wait_object();
@@ -518,7 +516,6 @@ namespace AdServer::ChannelSvcs
     for (const auto& client_holder : shutdown_client_holders_)
     {
       client_holder->client->wait_object();
-      ClientHolder::ClientDeleter::complete(client_holder->client);
     }
     shutdown_client_holders_.clear();
     grpc_executor_->deletion_queue()->wait();
@@ -1092,12 +1089,12 @@ namespace AdServer::ChannelSvcs
   ChannelDistributedGrpcClient::ClientHolderPtr
   ChannelDistributedGrpcClient::get_or_create_client_holder_(const std::string& endpoint)
   {
+    std::unique_lock<std::shared_mutex> lock(pool_lock_);
     if (deactivated_.load(std::memory_order_acquire))
     {
       return ClientHolderPtr();
     }
 
-    std::unique_lock<std::shared_mutex> lock(pool_lock_);
     auto& weak_client_holder = client_holders_[endpoint];
     auto client_holder = weak_client_holder.lock();
     if (!client_holder)

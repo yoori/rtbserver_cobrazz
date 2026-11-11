@@ -43,15 +43,11 @@ sub stop_pidfile_command
     "pid=\$(cat \"$pid_file\") || exit 1; " .
     "{ $alive || { rm -f \"$pid_file\"; exit 0; }; }; " .
     "kill -TERM \"\$pid\" 2>/dev/null || true; " .
-    "for i in `seq 1 60`; do " .
+    "while test -e \"$pid_file\"; do " .
       "test -e \"$pid_file\" || exit 0; " .
       "$alive || { rm -f \"$pid_file\"; exit 0; }; " .
       "sleep 1; " .
-    "done; " .
-    "test -e \"$pid_file\" || exit 0; " .
-    "$alive || { rm -f \"$pid_file\"; exit 0; }; " .
-    "echo \"Timed out waiting for process PID \$pid to stop; pid file retained\" >&2; " .
-    "exit 1 )";
+    "done )";
 }
 
 sub stop_by_pidfile

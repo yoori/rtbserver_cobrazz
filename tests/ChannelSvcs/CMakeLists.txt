@@ -20,3 +20,7 @@ target_link_libraries(ChannelUpdateGrpcTest
 add_executable(ChannelClientInterfaceTest ChannelClientInterfaceTest.cpp)
 target_link_libraries(ChannelClientInterfaceTest
   PRIVATE ChannelGrpcClient ChannelServerGrpcClient Commons Logger gRPC::grpc++)
+
+add_executable(ChannelDistributedShutdownTest ChannelDistributedShutdownTest.cpp)
+target_link_libraries(ChannelDistributedShutdownTest
+  PRIVATE ChannelGrpcClient ChannelControllerGrpc Commons Logger gRPC::grpc++)

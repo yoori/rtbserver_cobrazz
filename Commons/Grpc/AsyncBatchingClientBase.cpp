@@ -118,12 +118,12 @@ namespace AdServer::Grpc
 
   AsyncBatchingClientBase::~AsyncBatchingClientBase() = default;
 
-  void
-  AsyncBatchingClientBase::activate_object_()
+  void AsyncBatchingClientBase::activate_object_()
   {
     drain_callbacks_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
     timing_coalesce_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
     stream_shrink_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
+    grpc_executor_guard_ = grpc_executor_->activate_guard();
     drain_callbacks_gate_->activate_object();
     submission_gate_->activate_object();
     timing_coalesce_gate_->activate_object();
@@ -152,9 +152,13 @@ namespace AdServer::Grpc
     deactivate_streams_();
   }
 
-  void
-  AsyncBatchingClientBase::wait_object_()
+  void AsyncBatchingClientBase::wait_object_()
   {
+    if (!grpc_executor_guard_)
+    {
+      return;
+    }
+
     submission_gate_->wait_object();
     assert(drain_callbacks_gate_);
     drain_callbacks_gate_->wait_object();
@@ -192,6 +196,7 @@ namespace AdServer::Grpc
     drain_callbacks_gate_.reset();
     timing_coalesce_gate_.reset();
     stream_shrink_gate_.reset();
+    grpc_executor_guard_.reset();
   }
 
   AdServer::Grpc::Stats

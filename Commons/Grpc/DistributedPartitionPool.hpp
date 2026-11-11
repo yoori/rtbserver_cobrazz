@@ -152,6 +152,7 @@ namespace AdServer::Grpc
 
     void activate_object_() override;
     void deactivate_object_() override;
+    void wait_object_() override;
 
     void resolve_all_partitions_() noexcept;
     void periodic_resolve_loop_() noexcept;
@@ -167,7 +168,7 @@ namespace AdServer::Grpc
     void finish_resolve_partition_(unsigned long partition_index, bool installed) noexcept;
     PartitionPtr get_partition_(unsigned long partition_index) noexcept;
     RefHolderPtr get_or_create_ref_holder_(const std::string& endpoint);
-    void deactivate_partitions_() noexcept;
+    void shutdown_partitions_() noexcept;
     static void deactivate_partition_pools_(const PartitionPtr& partition) noexcept;
     static void deactivate_pools_(const std::vector<PoolPtr>& pools) noexcept;
     static void merge_stats_(

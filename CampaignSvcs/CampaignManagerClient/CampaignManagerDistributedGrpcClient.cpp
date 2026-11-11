@@ -204,7 +204,6 @@ namespace AdServer::CampaignSvcs
     for (const auto& client_holder : client_holders_)
     {
       client_holder->client->wait_object();
-      ClientHolder::ClientDeleter::complete(client_holder->client);
     }
 
     deletion_queue_->wait();
