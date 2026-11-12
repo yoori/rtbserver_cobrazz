@@ -1751,9 +1751,10 @@ namespace AdServer::CampaignSvcs::CTR
               throw InvalidConfig(ostr);
             }
 
-            // Version 2 CatBoost configs expect evaluator output to be a CTR.
-            model->predict_postprocess = model->method == MM_CATBOOST ?
-              PredictPostprocess::Sigmoid : PredictPostprocess::AsIs;
+            // Version 2 configs expect probabilities from CatBoost and Vanga models.
+            model->predict_postprocess =
+              model->method == MM_CATBOOST || model->method == MM_VANGA ?
+                PredictPostprocess::Sigmoid : PredictPostprocess::AsIs;
           }
           else if (model_it->predict_postprocess == "as_is")
           {
@@ -1793,7 +1794,8 @@ namespace AdServer::CampaignSvcs::CTR
                   *basic_feature_it == BF_CREATIVE_ID || *basic_feature_it == BF_CC_ID);
               }
 
-              if (model->method == MM_CATBOOST && feature_it->basic_features.size() == 1)
+              if ((model->method == MM_CATBOOST || model->method == MM_VANGA) &&
+                feature_it->basic_features.size() == 1)
               {
                 const auto feature_id = *feature_it->basic_features.begin();
                 if (is_direct_ssp_float_feature(feature_id))

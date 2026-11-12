@@ -189,6 +189,32 @@ main()
     "value=false handling is broken");
   check(request_token_calls == 1, "value=false should not compute value");
 
+  {
+    AdServer::CampaignSvcs::CampaignManagerCore::CommonAdRequest request;
+    request.user_agent.assign(800, 'u');
+    request.preclick_url = "https://example.com/publisher-click";
+    request.full_referer = "https://example.com/page";
+    request.passback_type = "html";
+
+    auto context = std::make_shared<InstantiateAdContext>();
+    context->request_params = &request;
+    auto request_args = request_manager->create_provider(context);
+    auto common_args = common_manager->create_provider(context);
+    check(
+      get_arg(*request_args, "UA", value) && value == std::string(500, 'u'),
+      "arena user agent truncation failed");
+    check(
+      get_arg(*request_args, "PUBPRECLICK", value) &&
+        value == "https://example.com/publisher-click",
+      "arena publisher preclick URL changed");
+    check(
+      get_arg(*request_args, "DOMAIN", value) && value == "example.com",
+      "arena referer domain changed");
+    check(
+      get_arg(*common_args, "PASSBACK_TYPE", value) && value == "html",
+      "arena passback type changed");
+  }
+
   std::cout << "InstantiateAdArgsTest passed" << std::endl;
   return 0;
 }

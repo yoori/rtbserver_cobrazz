@@ -6,5 +6,5 @@ target_link_libraries(SVMUtil
     Generics
     # IPMap
     #Geoip
-    Vanga::GearsThreading
+    Vanga::DTree
 )

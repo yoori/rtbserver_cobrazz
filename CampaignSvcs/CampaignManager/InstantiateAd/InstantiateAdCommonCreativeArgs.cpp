@@ -69,7 +69,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         const auto& data = provider.context();
         if (!data.request_params->passback_type.empty())
         {
-          return data.request_params->passback_type;
+          return std::string(data.request_params->passback_type);
         }
 
         return data.tag ? std::optional<std::string>(data.tag->passback_type) :

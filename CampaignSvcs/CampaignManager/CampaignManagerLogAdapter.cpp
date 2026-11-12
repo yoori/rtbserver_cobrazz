@@ -10,28 +10,6 @@
 namespace AdServer::CampaignSvcs
 {
   void
-  CampaignManagerLogAdapter::convert_channel_ids_(
-    ChannelIdHashSet& all_channels,
-    ChannelIdHashSet& channels,
-    CampaignManagerLogger::TriggerChannelMap& triggers,
-    const CampaignManagerCore::ChannelTriggerMatchArray& channel_trigger_matches)
-    noexcept
-  {
-    triggers.reserve(triggers.size() + channel_trigger_matches.size());
-    for (const auto& channel_trigger_match : channel_trigger_matches)
-    {
-      triggers.emplace_back(
-        channel_trigger_match.channel_id,
-        channel_trigger_match.channel_trigger_id);
-      if (&all_channels != &channels)
-      {
-        all_channels.insert(channel_trigger_match.channel_id);
-      }
-      channels.insert(channel_trigger_match.channel_id);
-    }
-  }
-
-  void
   CampaignManagerLogAdapter::fill_responded_channel_info_(
     CampaignManagerLogger::AdSelectionInfo& ad_info,
     const CampaignSelectionData& cs_data,
@@ -133,9 +111,12 @@ namespace AdServer::CampaignSvcs
 
     request_info.page_keywords_present = log_request.page_keywords_present;
 
-    request_info.search_words = new Commons::StringHolder(log_request.search_words);
-    request_info.page_keywords = new Commons::StringHolder(log_request.page_keywords);
-    request_info.url_keywords = new Commons::StringHolder(log_request.url_keywords);
+    request_info.search_words =
+      new Commons::StringHolder(std::string_view(log_request.search_words));
+    request_info.page_keywords =
+      new Commons::StringHolder(std::string_view(log_request.page_keywords));
+    request_info.url_keywords =
+      new Commons::StringHolder(std::string_view(log_request.url_keywords));
     request_info.fraud = log_request.fraud;
     request_info.search_engine_id = log_request.search_engine_id;
 
@@ -168,13 +149,18 @@ namespace AdServer::CampaignSvcs
     request_info.user_status = static_cast<UserStatus>(common_info.user_status);
     request_info.user_id = common_info.user_id;
     request_info.request_id = common_info.request_id;
-    request_info.external_id = common_info.external_user_id;
-    request_info.referer = common_info.referer;
-    request_info.urls.assign(common_info.urls.begin(), common_info.urls.end());
+    request_info.external_id = std::string_view(common_info.external_user_id);
+    request_info.referer = std::string_view(common_info.referer);
+    request_info.urls.clear();
+    request_info.urls.reserve(common_info.urls.size());
+    for (const auto& url : common_info.urls)
+    {
+      request_info.urls.emplace_back(std::string_view(url));
+    }
 
     if (!common_info.location.empty())
     {
-      request_info.country_code = common_info.location[0].country;
+      request_info.country_code = std::string_view(common_info.location[0].country);
     }
 
     request_info.random = common_info.random;
@@ -302,7 +288,7 @@ namespace AdServer::CampaignSvcs
 
     if (!common_info.user_agent.empty())
     {
-      request_info.user_agent = new Commons::StringHolder(common_info.user_agent);
+      request_info.user_agent = new Commons::StringHolder(std::string_view(common_info.user_agent));
     }
 
     request_info.platforms.clear();
@@ -319,17 +305,15 @@ namespace AdServer::CampaignSvcs
       unsigned long cur_priority = 0;
       request_info.last_platform_channel_id = 0;
 
-      for (ChannelIdSet::const_iterator pch_it = request_info.platform_channels.begin();
-        pch_it != request_info.platform_channels.end();
-        ++pch_it)
+      for (const auto platform_channel : request_info.platform_channels)
       {
-        auto pr_it = campaign_config->platform_channel_priorities.find(*pch_it);
+        auto pr_it = campaign_config->platform_channel_priorities.find(platform_channel);
         if (pr_it != campaign_config->platform_channel_priorities.end())
         {
           if (request_info.last_platform_channel_id == 0 || cur_priority < pr_it->second.priority)
           {
             cur_priority = pr_it->second.priority;
-            request_info.last_platform_channel_id = *pch_it;
+            request_info.last_platform_channel_id = platform_channel;
           }
         }
       }
@@ -374,7 +358,7 @@ namespace AdServer::CampaignSvcs
     // for RTB input tag_id is 0
     ad_request_selection_info.request_tag_id = ad_slot.tag_id ?
       ad_slot.tag_id : (tag ? tag->tag_id : 0);
-    ad_request_selection_info.ext_tag_id = ad_slot.ext_tag_id;
+    ad_request_selection_info.ext_tag_id = std::string_view(ad_slot.ext_tag_id);
     ad_request_selection_info.floor_cost = RevenueDecimal::div(
       ad_slot_min_cpm.min_pub_ecpm,
       ECPM_FACTOR);
@@ -434,7 +418,7 @@ namespace AdServer::CampaignSvcs
       for (Tag::SizeMap::const_iterator tag_size_it = tag_sizes.begin();
         tag_size_it != tag_sizes.end(); ++tag_size_it)
       {
-        ad_request_selection_info.tag_sizes.insert(tag_size_it->second->size->protocol_name);
+        ad_request_selection_info.tag_sizes.emplace(tag_size_it->second->size->protocol_name);
       }
 
       if (ad_selection_result.tag_size)
@@ -471,7 +455,7 @@ namespace AdServer::CampaignSvcs
     if (ad_selection_result.selected_campaigns.empty())
     {
       // process no selected ad request
-      AdSelectionInfo ad_info;
+      AdSelectionInfo& ad_info = ad_info_list.emplace_back();
       DataPricing data_pricing(0, 0);
 
       CampaignManagerLogAdapter::fill_ad_selection_info_(
@@ -489,7 +473,6 @@ namespace AdServer::CampaignSvcs
         1,
         ad_slot_context);
 
-      ad_info_list.push_back(ad_info);
     }
     else
     {
@@ -525,7 +508,7 @@ namespace AdServer::CampaignSvcs
         DataPricing& dp = data_pricings[idx];
         dp = DataPricing(cs_data, tag_pricing);
 
-        AdSelectionInfo ad_info;
+        AdSelectionInfo& ad_info = ad_info_list.emplace_back();
 
         CampaignManagerLogAdapter::fill_ad_selection_info_(
           ad_info,
@@ -547,7 +530,6 @@ namespace AdServer::CampaignSvcs
           ad_info.enabled_impression_tracking = false;
         }
 
-        ad_info_list.push_back(ad_info);
       } // for (CampaignSelectionDataList)
     }
   }

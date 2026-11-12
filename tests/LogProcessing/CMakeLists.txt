@@ -14,3 +14,11 @@ target_link_libraries(LogGeneralizerHttpTest PRIVATE HttpServer Commons Generics
 add_executable(LogGeneralizerGrpcTest LogGeneralizerGrpcTest.cpp)
 target_link_libraries(LogGeneralizerGrpcTest
   PRIVATE LogGeneralizerGrpc GrpcBatch CampaignConfigModifier Logger)
+
+add_executable(LogStringViewTest LogStringViewTest.cpp)
+target_link_libraries(LogStringViewTest PRIVATE LogCommons Generics)
+target_compile_definitions(LogStringViewTest PRIVATE LOG_STRING_VIEW_COUNT_ALLOCATIONS=1)
+
+# Keep allocation interception separate from the lifetime test run under Valgrind.
+add_executable(LogStringViewLifetimeTest LogStringViewTest.cpp)
+target_link_libraries(LogStringViewLifetimeTest PRIVATE LogCommons Generics)

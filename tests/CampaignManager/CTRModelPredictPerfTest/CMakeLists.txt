@@ -11,7 +11,44 @@ target_link_libraries(CTRModelPredictPerfTest
     Generics
 )
 
+add_executable(VangaCTREvaluatorTest VangaCTREvaluatorTest.cpp)
+
+target_link_libraries(VangaCTREvaluatorTest
+  PRIVATE
+    CTRProviderImplLib
+    Vanga::DTree
+    HTTP
+    Generics
+)
+
+add_custom_target(RunVangaCTREvaluatorTest
+  COMMAND $<TARGET_FILE:VangaCTREvaluatorTest>
+    ${CMAKE_CURRENT_SOURCE_DIR}/vanga_feature_indexes.model
+    ${CMAKE_CURRENT_SOURCE_DIR}/vanga_numeric_features.model
+  DEPENDS VangaCTREvaluatorTest
+)
+
 add_custom_target(CTRModelPredictCompatibilityTest
+  COMMAND $<TARGET_FILE:CTRModelPredictPerfTest>
+    --model=${CMAKE_SOURCE_DIR}/tests/Predictor/data/VangaNumericSSP
+    --mode=full
+    --count=2
+    --expected-ctr=0.88079707
+  COMMAND $<TARGET_FILE:CTRModelPredictPerfTest>
+    --model=${CMAKE_SOURCE_DIR}/tests/Predictor/data/VangaSSP
+    --mode=full
+    --count=2
+    --expected-ctr=0.88079707
+  COMMAND $<TARGET_FILE:CTRModelPredictPerfTest>
+    --model=${CMAKE_SOURCE_DIR}/tests/Predictor/data/VangaSigmoid
+    --mode=full
+    --count=2
+    --expected-ctr=0.88079707
+  COMMAND $<TARGET_FILE:CTRModelPredictPerfTest>
+    --model=${CMAKE_SOURCE_DIR}/tests/Predictor/data/VangaLogitSum
+    --mode=full
+    --count=2
+    --expected-ctr=0.37754066
   COMMAND $<TARGET_FILE:CTRModelPredictPerfTest>
     --model=${CMAKE_SOURCE_DIR}/tests/Predictor/data/CatBoostRuntime
     --mode=full

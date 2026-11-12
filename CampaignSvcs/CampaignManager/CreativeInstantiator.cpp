@@ -938,7 +938,7 @@ namespace AdServer::CampaignSvcs
       AdServer::Commons::ExternalUserIdArray user_ids;
       if (!request_params.external_user_id.empty())
       {
-        user_ids.push_back(request_params.external_user_id);
+        user_ids.emplace_back(request_params.external_user_id);
       }
 
       if (!request_params.user_id.is_null())
@@ -964,7 +964,7 @@ namespace AdServer::CampaignSvcs
       request_params.full_referer.empty() ? request_params.referer : request_params.full_referer);
 
     {
-      const std::string& referer = request_params.full_referer.empty() ?
+      const std::string_view referer = request_params.full_referer.empty() ?
         request_params.referer : request_params.full_referer;
 
       if (!referer.empty())
@@ -1054,7 +1054,8 @@ namespace AdServer::CampaignSvcs
 
     request_args.set_value(
       CreativeTokens::PUBPRECLICK,
-      request_params.request_type == AR_ADRIVER ? ADRIVER_CLICKPIXEL : request_params.preclick_url);
+      request_params.request_type == AR_ADRIVER ?
+        std::string_view(ADRIVER_CLICKPIXEL) : std::string_view(request_params.preclick_url));
   }
 
   void
@@ -1996,7 +1997,7 @@ namespace AdServer::CampaignSvcs
       append_click_string_param(token_name.c_str(), mime_token_value);
     }
 
-    const std::string& referer = request_params.full_referer.empty() ?
+    const std::string_view referer = request_params.full_referer.empty() ?
       request_params.referer : request_params.full_referer;
 
     if (!referer.empty())
@@ -2777,13 +2778,13 @@ namespace AdServer::CampaignSvcs
     instantiate_params.publisher_site_id = request_params.publisher_site_id;
     instantiate_params.publisher_account_id = ad_slot_context.publisher_account_id;
 
-    std::string inst_rule(
+    const std::string_view inst_rule(
       request_params.common_info->request_type == AR_GOOGLE &&
         !ad_selection_result.selected_campaigns.empty() &&
         ad_selection_result.selected_campaigns.front().
           creative->https_safe_flag ?
-          AdInstantiateRule::SECURE.str() :
-          request_params.common_info->creative_instantiate_type);
+          std::string_view(AdInstantiateRule::SECURE.data(), AdInstantiateRule::SECURE.size()) :
+          std::string_view(request_params.common_info->creative_instantiate_type));
 
     CreativeInstantiateRuleMap::const_iterator rule_it =
       creative_instantiate_.creative_rules.find(inst_rule);
@@ -3007,11 +3008,11 @@ namespace AdServer::CampaignSvcs
       const char* cr_format = creative->creative_format.c_str();
       const std::string& cr_size = ad_selection_result.tag_size->size->protocol_name;
 
-      std::string inst_rule(
+      const std::string_view inst_rule(
         request_params.request_type == AR_GOOGLE &&
           creative->https_safe_flag ?
-            AdInstantiateRule::SECURE.str() :
-            request_params.creative_instantiate_type);
+            std::string_view(AdInstantiateRule::SECURE.data(), AdInstantiateRule::SECURE.size()) :
+            std::string_view(request_params.creative_instantiate_type));
 
       CreativeInstantiateRuleMap::const_iterator rule_it =
         creative_instantiate_.creative_rules.find(inst_rule);
@@ -3135,7 +3136,7 @@ namespace AdServer::CampaignSvcs
     {
       CreativeInstantiateRuleMap::const_iterator rule_it =
         creative_instantiate_.creative_rules.find(
-          request_params.common_info->creative_instantiate_type);
+          std::string_view(request_params.common_info->creative_instantiate_type));
 
       if (rule_it == creative_instantiate_.creative_rules.end())
       {
@@ -3525,8 +3526,7 @@ namespace AdServer::CampaignSvcs
 
     // Data tokens
 
-    for (std::vector<NativeDataTokenInfo>::const_iterator token_it =
-        ad_slot.native_data_tokens.begin();
+    for (auto token_it = ad_slot.native_data_tokens.begin();
       token_it != ad_slot.native_data_tokens.end(); ++token_it)
     {
       std::string token_value;
@@ -3547,8 +3547,7 @@ namespace AdServer::CampaignSvcs
     }
 
     // Image tokens
-    for (std::vector<NativeImageTokenInfo>::const_iterator token_it =
-        ad_slot.native_image_tokens.begin();
+    for (auto token_it = ad_slot.native_image_tokens.begin();
       token_it != ad_slot.native_image_tokens.end(); ++token_it)
     {
       unsigned long width = token_it->width;
@@ -3569,9 +3568,9 @@ namespace AdServer::CampaignSvcs
       {
         if (token_it->name != MAIN_IMAGE)
         {
-          std::string width_name = token_it->name;
+          std::string width_name(token_it->name);
           width_name += "_WIDTH";
-          std::string height_name = token_it->name;
+          std::string height_name(token_it->name);
           height_name += "_HEIGHT";
 
           std::string width_value;

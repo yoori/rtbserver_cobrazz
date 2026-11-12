@@ -21,14 +21,7 @@ namespace AdServer::LogProcessing
     {
     }
 
-    SearchEngineStatInnerKey(std::uint32_t search_engine_id, const std::string& host_name)
-    :
-      search_engine_id_(search_engine_id),
-      host_name_(host_name),
-      hash_()
-    {
-      calc_hash_();
-    }
+    SearchEngineStatInnerKey(std::uint32_t search_engine_id, std::string_view host_name);
 
     bool operator==(const SearchEngineStatInnerKey& rhs) const
     {

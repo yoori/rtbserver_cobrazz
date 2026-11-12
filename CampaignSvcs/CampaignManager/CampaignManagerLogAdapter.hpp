@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
 
@@ -109,12 +111,12 @@ namespace AdServer::CampaignSvcs
       const ChannelIdHashSet* channels)
       noexcept;
 
-    static void
-    convert_channel_ids_(
+    template<typename TriggerContainer>
+    static void convert_channel_ids_(
       ChannelIdHashSet& all_channels,
       ChannelIdHashSet& channels,
-      CampaignManagerLogger::TriggerChannelMap& triggers,
-      const CampaignManagerCore::ChannelTriggerMatchArray& behav_params)
+      TriggerContainer& triggers,
+      std::span<const CampaignManagerCore::ChannelTriggerMatchInfo> behav_params)
       noexcept;
 
     static void
@@ -131,4 +133,25 @@ namespace AdServer::CampaignSvcs
       const CampaignManagerCore::CommonAdRequest& common_info)
       /*throw(Exception)*/;
   };
+
+  template<typename TriggerContainer>
+  void CampaignManagerLogAdapter::convert_channel_ids_(
+    ChannelIdHashSet& all_channels,
+    ChannelIdHashSet& channels,
+    TriggerContainer& triggers,
+    std::span<const CampaignManagerCore::ChannelTriggerMatchInfo> channel_trigger_matches)
+    noexcept
+  {
+    triggers.reserve(triggers.size() + channel_trigger_matches.size());
+    for (const auto& channel_trigger_match : channel_trigger_matches)
+    {
+      triggers.emplace_back(
+        channel_trigger_match.channel_id, channel_trigger_match.channel_trigger_id);
+      if (&all_channels != &channels)
+      {
+        all_channels.insert(channel_trigger_match.channel_id);
+      }
+      channels.insert(channel_trigger_match.channel_id);
+    }
+  }
 }

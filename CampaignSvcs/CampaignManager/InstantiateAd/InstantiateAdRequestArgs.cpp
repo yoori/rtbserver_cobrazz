@@ -48,7 +48,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     get_referer_domain(const InstantiateAdContext& data)
     {
       const auto& request_params = *data.request_params;
-      const std::string& referer = request_params.full_referer.empty() ?
+      const std::string_view referer = request_params.full_referer.empty() ?
         request_params.referer : request_params.full_referer;
       if (referer.empty())
       {
@@ -97,7 +97,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       AdServer::Commons::ExternalUserIdArray user_ids;
       if (!request_params.external_user_id.empty())
       {
-        user_ids.push_back(request_params.external_user_id);
+        user_ids.emplace_back(request_params.external_user_id);
       }
 
       if (!request_params.user_id.is_null())
@@ -415,7 +415,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         const auto& request_params = *provider.context().request_params;
         return std::optional<std::string>(
           request_params.request_type == AR_ADRIVER ?
-            ADRIVER_CLICKPIXEL : request_params.preclick_url);
+            std::string_view(ADRIVER_CLICKPIXEL) : std::string_view(request_params.preclick_url));
       });
 
     add_processor(
@@ -523,7 +523,8 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::nullopt;
         }
 
-        return std::optional<std::string>(user_agent.substr(0, MAX_UA_TOKEN_SIZE));
+        return std::optional<std::string>(
+          std::string_view(user_agent).substr(0, MAX_UA_TOKEN_SIZE));
       });
 
     add_processor(

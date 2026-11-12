@@ -180,7 +180,7 @@ namespace
   void
   add_trigger(
     AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo& request_info,
-    AdServer::CampaignSvcs::CampaignManagerLogger::TriggerChannelMap& triggers,
+    AdServer::CampaignSvcs::CampaignManagerLogger::ArenaTriggerChannelMap& triggers,
     AdServer::CampaignSvcs::ChannelIdHashSet& channel_set,
     unsigned long channel_id,
     unsigned long trigger_id)
@@ -208,7 +208,7 @@ namespace
     auto randomize_triggers = [
       &random_state,
       channel_trigger_id_count
-    ](AdServer::CampaignSvcs::CampaignManagerLogger::TriggerChannelMap& triggers)
+    ](AdServer::CampaignSvcs::CampaignManagerLogger::ArenaTriggerChannelMap& triggers)
     {
       for (auto& trigger : triggers)
       {
@@ -324,7 +324,7 @@ namespace
     };
     request_info->last_platform_channel_id = 1891019;
     request_info->referer = "http://rutube.ru/";
-    request_info->urls.push_back("http://rutube.ru/");
+    request_info->urls.emplace_back("http://rutube.ru/");
     request_info->profile_referer = true;
     request_info->ip_hash = "213.33.171.240";
     request_info->page_keywords = string_holder(

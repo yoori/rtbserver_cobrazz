@@ -9,6 +9,7 @@
 #include <map>
 #include <list>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 #include <forward_list>
@@ -305,7 +306,14 @@ namespace AdServer::LogProcessing
 
     StringIO(const std::string& str): std::string(str)
     {}
+
+    StringIO(std::string_view str);
   };
+
+  template<typename Convertor, const char SEPARATOR>
+  StringIO<Convertor, SEPARATOR>::StringIO(std::string_view str)
+    : std::string(str)
+  {}
 
   template <typename Convertor, const char SEPARATOR>
   std::istream&
@@ -467,8 +475,9 @@ namespace AdServer::LogProcessing
     EmptyHolder() noexcept
     {}
 
-    EmptyHolder(const Object& object) : object_(object)
-    {}
+    template<typename Value,
+      typename = std::enable_if_t<std::is_constructible_v<Object, const Value&>>>
+    EmptyHolder(const Value& value);
 
     Object&
     get() noexcept
@@ -484,6 +493,12 @@ namespace AdServer::LogProcessing
   private:
     Object object_;
   };
+
+  template<typename Object>
+  template<typename Value, typename>
+  EmptyHolder<Object>::EmptyHolder(const Value& value)
+    : object_(value)
+  {}
 
   template <class UUID_>
   struct UuidIoWrapper: public UUID_

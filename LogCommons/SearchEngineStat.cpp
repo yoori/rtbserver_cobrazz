@@ -5,6 +5,15 @@
 
 namespace AdServer::LogProcessing
 {
+  SearchEngineStatInnerKey::SearchEngineStatInnerKey(
+    std::uint32_t search_engine_id, std::string_view host_name)
+    : search_engine_id_(search_engine_id),
+      host_name_(host_name),
+      hash_()
+  {
+    calc_hash_();
+  }
+
 
   template <> const char*
   SearchEngineStatTraits::B::base_name_ = "SearchEngineStat";

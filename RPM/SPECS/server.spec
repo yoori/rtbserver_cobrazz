@@ -32,7 +32,7 @@
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
-%define __vanga_ver_req         1.0.0.21
+%define __vanga_ver_req         1.0.0.24
 %define __rocksdb_ver_req       11.8.1-ssv7.el8
 %define __folly_ver_req         2024.01.08.00-ssv2.el8
 %define __jemalloc_ver_req      5.3.0-ssv1.el8

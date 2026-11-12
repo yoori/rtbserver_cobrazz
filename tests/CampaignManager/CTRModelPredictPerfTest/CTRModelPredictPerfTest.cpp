@@ -211,6 +211,9 @@ namespace
     data.request_params->time_hour = 20;
     data.request_params->time_week_day = 6;
     data.request_params->last_platform_channel_id = 1891019;
+    data.request_params->ssp_ctr = 0.25f;
+    data.request_params->ssp_viewability = 0.5f;
+    data.request_params->ssp_vtr = 0.75f;
     data.request_params->geo_channels.insert(1156234);
     for (const unsigned long channel_id : {
       3781076UL, 3752930UL, 3772324UL, 3772325UL, 3816396UL,

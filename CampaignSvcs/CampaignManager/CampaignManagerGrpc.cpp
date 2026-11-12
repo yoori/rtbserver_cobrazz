@@ -203,10 +203,10 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    template<typename String>
+    template<typename String, typename StringContainer>
     void unpack_strings(
       const google::protobuf::RepeatedPtrField<String>& source,
-      CampaignManagerCore::StringArray& target)
+      StringContainer& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -227,16 +227,16 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    void
-    unpack_tokens(
+    template<typename TokenContainer>
+    void unpack_tokens(
       const google::protobuf::RepeatedPtrField<pb::TokenInfo>& source,
-      CampaignManagerCore::TokenArray& target)
+      TokenContainer& target)
     {
       target.clear();
       target.reserve(source.size());
       for (const auto& item : source)
       {
-        target.push_back({std::string(item.name()), std::string(item.value())});
+        target.emplace_back(item.name(), item.value());
       }
     }
 
@@ -309,10 +309,10 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    void
-    unpack_geo_coord_info_seq(
+    template<typename CoordContainer>
+    void unpack_geo_coord_info_seq(
       const google::protobuf::RepeatedPtrField<pb::GeoCoordInfo>& source,
-      std::vector<CampaignManagerCore::GeoCoordInfo>& target)
+      CoordContainer& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -356,10 +356,10 @@ namespace AdServer::CampaignSvcs
       return {source.channel_trigger_id(), source.channel_id()};
     }
 
-    void
-    unpack_channel_trigger_matches(
+    template<typename MatchContainer>
+    void unpack_channel_trigger_matches(
       const google::protobuf::RepeatedPtrField<pb::ChannelTriggerMatchInfo>& source,
-      CampaignManagerCore::ChannelTriggerMatchArray& target)
+      MatchContainer& target)
     {
       target.clear();
       target.reserve(source.size());
@@ -367,20 +367,6 @@ namespace AdServer::CampaignSvcs
       {
         target.push_back(unpack_channel_trigger_match(item));
       }
-    }
-
-    CampaignManagerCore::CCGKeywordInfo
-    unpack_ccg_keyword(const pb::CcgKeywordInfo& source)
-    {
-      return {
-        source.ccg_keyword_id(),
-        source.ccg_id(),
-        source.channel_id(),
-        unpack_revenue_decimal(source.max_cpc()),
-        unpack_revenue_decimal(source.ctr()),
-        std::string(source.click_url()),
-        std::string(source.original_keyword())
-      };
     }
 
     template<typename CCGKeywordContainer>
@@ -393,7 +379,14 @@ namespace AdServer::CampaignSvcs
       target.reserve(source.size());
       for (const auto& item : source)
       {
-        target.push_back(unpack_ccg_keyword(item));
+        auto& keyword = target.emplace_back();
+        keyword.ccg_keyword_id = item.ccg_keyword_id();
+        keyword.ccg_id = item.ccg_id();
+        keyword.channel_id = item.channel_id();
+        keyword.max_cpc = unpack_revenue_decimal(item.max_cpc());
+        keyword.ctr = unpack_revenue_decimal(item.ctr());
+        keyword.click_url = item.click_url();
+        keyword.original_keyword = item.original_keyword();
       }
     }
 
@@ -437,7 +430,12 @@ namespace AdServer::CampaignSvcs
       target.colo_id = source.colo_id();
       target.external_user_id = source.external_user_id();
       target.source_id = source.source_id();
-      unpack_geo_info_seq(source.location(), target.location);
+      target.location.clear();
+      target.location.reserve(source.location_size());
+      for (const auto& item : source.location())
+      {
+        target.location.emplace_back(item.country(), item.region(), item.city());
+      }
       unpack_geo_coord_info_seq(source.coord_location(), target.coord_location);
       target.full_referer = source.full_referer();
       target.referer = source.referer();
@@ -536,20 +534,22 @@ namespace AdServer::CampaignSvcs
       unpack_strings(source.exclude_categories(), target.exclude_categories);
       unpack_strings(source.required_categories(), target.required_categories);
       target.debug_ccg = source.debug_ccg();
-      target.allowed_durations = unpack_ids(source.allowed_durations());
+      unpack_ids_to(source.allowed_durations(), target.allowed_durations);
       target.native_data_tokens.reserve(source.native_data_tokens_size());
       for (const auto& token : source.native_data_tokens())
       {
-        target.native_data_tokens.push_back({std::string(token.name()), token.required()});
+        auto& data_token = target.native_data_tokens.emplace_back();
+        data_token.name = token.name();
+        data_token.required = token.required();
       }
       target.native_image_tokens.reserve(source.native_image_tokens_size());
       for (const auto& token : source.native_image_tokens())
       {
-        target.native_image_tokens.push_back({
-          std::string(token.name()),
-          token.required(),
-          token.width(),
-          token.height()});
+        auto& image_token = target.native_image_tokens.emplace_back();
+        image_token.name = token.name();
+        image_token.required = token.required();
+        image_token.width = token.width();
+        image_token.height = token.height();
       }
       target.native_ads_impression_tracker_type = source.native_ads_impression_tracker_type();
       target.fill_track_html = source.fill_track_html();
@@ -602,8 +602,9 @@ namespace AdServer::CampaignSvcs
       unpack_channel_trigger_matches(
         source.trigger_match_result().ukw_channels(),
         target.log_request.trigger_match_result.ukw_channels);
-      target.log_request.trigger_match_result.uid_channels =
-        unpack_ids(source.trigger_match_result().uid_channels());
+      unpack_ids_to(
+        source.trigger_match_result().uid_channels(),
+        target.log_request.trigger_match_result.uid_channels);
       target.client_create_time = unpack_time(source.client_create_time());
       target.session_start = unpack_time(source.session_start());
       unpack_ids_to(source.exclude_pubpixel_accounts(), target.exclude_pubpixel_accounts);

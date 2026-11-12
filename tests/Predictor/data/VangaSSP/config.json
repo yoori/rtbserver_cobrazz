@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "default_weight": 0,
+  "algorithms": [
+    {
+      "id": "vanga_ssp_test",
+      "weight": 1,
+      "threshold": 0,
+      "models": [
+        {
+          "method": "vanga",
+          "features_size": 16384,
+          "weight": 1.0,
+          "features": [
+            ["ssp_ctr"],
+            ["ssp_viewability"],
+            ["ssp_vtr"]
+          ],
+          "file": "model.vanga"
+        }
+      ]
+    }
+  ]
+}

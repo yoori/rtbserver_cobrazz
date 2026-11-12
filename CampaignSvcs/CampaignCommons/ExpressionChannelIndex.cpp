@@ -7,9 +7,7 @@
 
 namespace
 {
-  //const bool TRACE_MATCH_ = true;
   const bool PRINT_CHECK_CHANNELS_ = true;
-  const bool TRACE_MATCH_ = false;
 }
 
 namespace AdServer::CampaignSvcs
@@ -1001,144 +999,16 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void
-  ExpressionChannelIndex::match_(
-    ChannelIdSet& result_channels,
-    ChannelIdSet* result_cpm_channels,
-    CheckChannelMap& check_channels,
-    const ExpressionChannelMatch& expr_channel_match,
-    const ChannelIdHashSet& channels)
-    noexcept
+  void ExpressionChannelIndex::match(ChannelIdSet& result_channels,
+    const ChannelIdHashSet& channels, ChannelIdSet* result_cpm_channels) const
   {
-    if (TRACE_MATCH_)
-    {
-      std::cout << "> match_()" << std::endl;
-      std::cout << "match_(): matched_channels(" <<
-        expr_channel_match.matched_channels.size() << "): ";
-      Algs::print(std::cout,
-        expr_channel_match.matched_channels.begin(),
-        expr_channel_match.matched_channels.end());
-      std::cout << std::endl;
-    }
-
-    result_channels.insert(
-      expr_channel_match.matched_channels.begin(),
-      expr_channel_match.matched_channels.end());
-
-    if (result_cpm_channels)
-    {
-      result_cpm_channels->insert(
-        expr_channel_match.cpm_matched_channels.begin(),
-        expr_channel_match.cpm_matched_channels.end());
-    }
-
-    if (TRACE_MATCH_)
-    {
-      std::cout << "match_(): check_channels(" << expr_channel_match.check_channels.size() << "): ";
-      for (auto ech_it = expr_channel_match.check_channels.cbegin();
-          ech_it != expr_channel_match.check_channels.cend(); ++ech_it)
-      {
-        if (ech_it != expr_channel_match.check_channels.begin())
-        {
-          std::cout << ",";
-        }
-        std::cout << ech_it->channel_id;
-      }
-      std::cout << std::endl;
-    }
-
-    for (auto ech_it = expr_channel_match.check_channels.cbegin();
-        ech_it != expr_channel_match.check_channels.cend(); ++ech_it)
-    {
-      check_channels.insert(std::make_pair(ech_it->channel_id, &*ech_it));
-    }
-
-    for (ExpressionChannelMatchMap::const_iterator sit =
-          expr_channel_match.channels_by_simple_channel_id.begin();
-        sit != expr_channel_match.channels_by_simple_channel_id.end();
-        ++sit)
-    {
-      if (TRACE_MATCH_)
-      {
-        std::cout << "match_(): reverse check for simple channel #" << sit->first << std::endl;
-      }
-
-      if (channels.find(sit->first) != channels.end())
-      {
-        if (TRACE_MATCH_)
-        {
-          std::cout << "match_(): recursive call for channel #" << sit->first << std::endl;
-        }
-
-        match_(result_channels, result_cpm_channels, check_channels, *sit->second, channels);
-      }
-    }
-
-    if (TRACE_MATCH_)
-    {
-      std::cout << "< match_()" << std::endl;
-    }
+    match_impl_(result_channels, channels, result_cpm_channels);
   }
 
-  void
-  ExpressionChannelIndex::match(
-    ChannelIdSet& result_channels,
-    const ChannelIdHashSet& channels,
-    ChannelIdSet* result_cpm_channels) const
-    /*throw(eh::Exception)*/
+  void ExpressionChannelIndex::match(Generics::MonoSet<ChannelId>& result_channels,
+    const ChannelIdHashSet& channels, ChannelIdSet* result_cpm_channels) const
   {
-    CheckChannelMap check_channels;
-
-    for (ChannelIdHashSet::const_iterator ch_it = channels.begin();
-      ch_it != channels.end(); ++ch_it)
-    {
-      ExpressionChannelMatchMap::const_iterator ind_it = channels_.find(*ch_it);
-      if (ind_it != channels_.end())
-      {
-        if (TRACE_MATCH_)
-        {
-          std::cout << "match_(): first level call for channel #" << *ch_it << std::endl;
-        }
-
-        match_(result_channels, result_cpm_channels, check_channels, *ind_it->second, channels);
-      }
-    }
-
-    if (TRACE_MATCH_)
-    {
-      std::cout << "match(): result check_channels(" << check_channels.size() << "): ";
-      for (CheckChannelMap::const_iterator ech_it = check_channels.begin();
-          ech_it != check_channels.end(); ++ech_it)
-      {
-        if (ech_it != check_channels.begin())
-        {
-          std::cout << ",";
-        }
-        std::cout << ech_it->first;
-      }
-      std::cout << std::endl;
-    }
-
-    //unsigned long result_channels_size = result_channels.size();
-
-    for (CheckChannelMap::const_iterator ech_it = check_channels.begin();
-        ech_it != check_channels.end(); ++ech_it)
-    {
-      if (ech_it->second->channel->triggered(&channels, 0, 0))
-      {
-        result_channels.insert(ech_it->first);
-
-        if (result_cpm_channels && ech_it->second->cpm_flag)
-        {
-          result_cpm_channels->insert(ech_it->first);
-        }
-      }
-    }
-
-    /*
-    std::cout << "check_channels.size() = " << check_channels.size() << ", matched = " <<
-      (result_channels.size() - result_channels_size) << std::endl;
-    */
+    match_impl_(result_channels, channels, result_cpm_channels);
   }
 
   bool

@@ -6,3 +6,20 @@ add_subdirectory(CTRModelPredictPerfTest)
 add_subdirectory(InstantiateAdArgsTest)
 add_subdirectory(InitCreativeTokensPerfTest)
 add_subdirectory(CampaignManagerInstantiateCreativeTest)
+
+add_executable(AdRequestArenaTest AdRequestArenaTest.cpp)
+target_link_libraries(AdRequestArenaTest
+  PRIVATE CampaignManagerLogger CreativeTemplateArgs HTTP Generics)
+
+add_executable(CampaignManagerLoggerQueueTest CampaignManagerLoggerQueueTest.cpp)
+target_link_libraries(CampaignManagerLoggerQueueTest
+  PRIVATE CampaignManagerLogger CreativeTemplateArgs HTTP Generics)
+
+add_executable(LoggerRequestInfoArenaTest LoggerRequestInfoArenaTest.cpp)
+target_link_libraries(LoggerRequestInfoArenaTest
+  PRIVATE CampaignManagerLogger ExpressionChannelIndex ExpressionChannel
+    CreativeTemplateArgs HTTP Generics)
+
+add_executable(LoggerSelectionArenaTest LoggerSelectionArenaTest.cpp)
+target_link_libraries(LoggerSelectionArenaTest
+  PRIVATE CampaignManagerLogger CreativeTemplateArgs HTTP Generics)

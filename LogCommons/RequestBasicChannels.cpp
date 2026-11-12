@@ -13,6 +13,92 @@
 
 namespace AdServer::LogProcessing
 {
+  RequestBasicChannelsInnerData::AdRequestProps::Data::Data(std::string_view country_code_val)
+    : sizes(),
+      country_code(country_code_val),
+      max_text_ads(),
+      text_ad_cost_threshold(FixedNum::ZERO),
+      display_ad_shown(),
+      text_ad_shown(),
+      ad_select(),
+      auction_type(CampaignSvcs::AT_MAX_ECPM)
+  {}
+
+  RequestBasicChannelsInnerData::DataHolder::DataHolder(
+    char user_type_val,
+    const UserId& user_id_val,
+    const UserId& temporary_user_id_val,
+    MatchOptional&& match_request_val,
+    const AdRequestPropsOptional& ad_request_val,
+    std::string_view external_id_val,
+    std::string_view referer_val,
+    const std::string& page_keywords_val,
+    unsigned long sampling_mask_val,
+    unsigned long random_val)
+    : user_type(user_type_val),
+      user_id(user_id_val),
+      temporary_user_id(temporary_user_id_val),
+      match_request(std::move(match_request_val)),
+      ad_request(ad_request_val),
+      external_id(external_id_val),
+      referer(referer_val),
+      page_keywords(page_keywords_val),
+      sampling_mask(sampling_mask_val),
+      random(random_val)
+  {
+    if (ad_request.present())
+    {
+      ad_request.get().normalize();
+    }
+  }
+
+  RequestBasicChannelsInnerData::RequestBasicChannelsInnerData(
+    char user_type,
+    const UserId& user_id,
+    const UserId& temporary_user_id,
+    MatchOptional&& match_request,
+    AdRequestPropsOptional&& ad_request,
+    std::string_view external_id,
+    std::string_view referer,
+    const std::string& page_keywords,
+    unsigned long sampling_mask)
+    : holder_(
+        new DataHolder(
+          user_type,
+          user_id,
+          temporary_user_id,
+          std::move(match_request),
+          std::move(ad_request),
+          external_id,
+          referer,
+          page_keywords,
+          sampling_mask,
+          Generics::safe_rand()
+        )
+      )
+  {
+  }
+
+  RequestBasicChannelsInnerData::AdRequestProps::AdRequestProps(
+    const StringList& sizes,
+    std::string_view country_code,
+    unsigned long max_text_ads,
+    const FixedNum& text_ad_cost_threshold,
+    const AdSlotImpressionOptional& display_ad_shown,
+    const AdBidSlotImpressionList& text_ad_shown,
+    const AdSelectPropsOptional& ad_select,
+    CampaignSvcs::AuctionType auction_type)
+    : data_(new Data(country_code))
+  {
+    data_->sizes.assign(sizes.begin(), sizes.end());
+    data_->max_text_ads = max_text_ads;
+    data_->text_ad_cost_threshold = text_ad_cost_threshold;
+    data_->display_ad_shown = display_ad_shown;
+    data_->text_ad_shown = text_ad_shown;
+    data_->ad_select = ad_select;
+    data_->auction_type = auction_type;
+  }
+
   template <> const char* RequestBasicChannelsTraits::B::base_name_ = "RequestBasicChannels";
 
   template <> const char* RequestBasicChannelsTraits::B::signature_ = "RequestBasicChannels";

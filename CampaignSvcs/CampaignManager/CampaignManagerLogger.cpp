@@ -4,10 +4,10 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <variant>
 #include <vector>
 
 #include <Generics/Rand.hpp>
@@ -373,6 +373,317 @@ namespace AdServer::CampaignSvcs
       threads(8)
   {}
 
+  CampaignManagerLogger::TriggeredChannelsData::TriggeredChannelsData()
+    : TriggeredChannelsData(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::TriggeredChannelsData::TriggeredChannelsData(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      channels(decltype(channels)::allocator_type(arena_.get())),
+      url_channels(decltype(url_channels)::allocator_type(arena_.get())),
+      page_channels(decltype(page_channels)::allocator_type(arena_.get())),
+      search_channels(decltype(search_channels)::allocator_type(arena_.get())),
+      url_keyword_channels(decltype(url_keyword_channels)::allocator_type(arena_.get())),
+      uid_channels(decltype(uid_channels)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::TriggeredChannelsData::TriggeredChannelsData(
+    const TriggeredChannelsData& other, std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      channels(other.channels, decltype(channels)::allocator_type(arena_.get())),
+      url_channels(other.url_channels, decltype(url_channels)::allocator_type(arena_.get())),
+      page_channels(other.page_channels, decltype(page_channels)::allocator_type(arena_.get())),
+      search_channels(
+        other.search_channels, decltype(search_channels)::allocator_type(arena_.get())),
+      url_keyword_channels(
+        other.url_keyword_channels, decltype(url_keyword_channels)::allocator_type(arena_.get())),
+      uid_channels(other.uid_channels, decltype(uid_channels)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::TriggeredChannelsData::TriggeredChannelsData(
+    const TriggeredChannelsData& other)
+    : TriggeredChannelsData(other, std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::TriggeredChannelsData::TriggeredChannelsData(TriggeredChannelsData&&)
+    noexcept = default;
+
+  CampaignManagerLogger::TriggeredChannelsData&
+  CampaignManagerLogger::TriggeredChannelsData::operator=(const TriggeredChannelsData& other)
+  {
+    if (this != &other)
+    {
+      TriggeredChannelsData replacement(other);
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  CampaignManagerLogger::TriggeredChannelsData&
+  CampaignManagerLogger::TriggeredChannelsData::operator=(TriggeredChannelsData&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TriggeredChannelsData replacement(std::move(other));
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  void CampaignManagerLogger::TriggeredChannelsData::swap(TriggeredChannelsData& other) noexcept
+  {
+    using std::swap;
+    swap(arena_, other.arena_);
+    swap(channels, other.channels);
+    swap(url_channels, other.url_channels);
+    swap(page_channels, other.page_channels);
+    swap(search_channels, other.search_channels);
+    swap(url_keyword_channels, other.url_keyword_channels);
+    swap(uid_channels, other.uid_channels);
+  }
+
+  CampaignManagerLogger::AnonymousRequestInfo::AnonymousRequestInfo()
+    : AnonymousRequestInfo(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AnonymousRequestInfo::AnonymousRequestInfo(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      client_app(decltype(client_app)::allocator_type(arena_.get())),
+      client_app_version(decltype(client_app_version)::allocator_type(arena_.get())),
+      full_platform(decltype(full_platform)::allocator_type(arena_.get())),
+      web_browser(decltype(web_browser)::allocator_type(arena_.get())),
+      search_engine_host(decltype(search_engine_host)::allocator_type(arena_.get())),
+      country_code(decltype(country_code)::allocator_type(arena_.get())),
+      platforms(decltype(platforms)::allocator_type(arena_.get())),
+      platform_channels(decltype(platform_channels)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::AnonymousRequestInfo::AnonymousRequestInfo(
+    const AnonymousRequestInfo& other, std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      time(other.time),
+      isp_time(other.isp_time),
+      isp_time_offset(other.isp_time_offset),
+      colo_id(other.colo_id),
+      user_status(other.user_status),
+      log_as_test(other.log_as_test),
+      search_engine_id(other.search_engine_id),
+      search_words(other.search_words),
+      client_app(other.client_app, decltype(client_app)::allocator_type(arena_.get())),
+      client_app_version(
+        other.client_app_version, decltype(client_app_version)::allocator_type(arena_.get())),
+      full_platform(other.full_platform, decltype(full_platform)::allocator_type(arena_.get())),
+      web_browser(other.web_browser, decltype(web_browser)::allocator_type(arena_.get())),
+      user_agent(other.user_agent),
+      search_engine_host(
+        other.search_engine_host, decltype(search_engine_host)::allocator_type(arena_.get())),
+      country_code(other.country_code, decltype(country_code)::allocator_type(arena_.get())),
+      page_keywords_present(other.page_keywords_present),
+      platforms(other.platforms, decltype(platforms)::allocator_type(arena_.get())),
+      platform_channels(
+        other.platform_channels, decltype(platform_channels)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::AnonymousRequestInfo::AnonymousRequestInfo(
+    const AnonymousRequestInfo& other)
+    : AnonymousRequestInfo(other, std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AnonymousRequestInfo::AnonymousRequestInfo(AnonymousRequestInfo&&)
+    noexcept = default;
+
+  CampaignManagerLogger::AnonymousRequestInfo&
+  CampaignManagerLogger::AnonymousRequestInfo::operator=(const AnonymousRequestInfo& other)
+  {
+    if (this != &other)
+    {
+      AnonymousRequestInfo replacement(other);
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  CampaignManagerLogger::AnonymousRequestInfo&
+  CampaignManagerLogger::AnonymousRequestInfo::operator=(AnonymousRequestInfo&& other) noexcept
+  {
+    if (this != &other)
+    {
+      AnonymousRequestInfo replacement(std::move(other));
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  void CampaignManagerLogger::AnonymousRequestInfo::swap(AnonymousRequestInfo& other) noexcept
+  {
+    using std::swap;
+    swap(arena_, other.arena_);
+    swap(time, other.time);
+    swap(isp_time, other.isp_time);
+    swap(isp_time_offset, other.isp_time_offset);
+    swap(colo_id, other.colo_id);
+    swap(user_status, other.user_status);
+    swap(log_as_test, other.log_as_test);
+    swap(search_engine_id, other.search_engine_id);
+    swap(search_words, other.search_words);
+    swap(client_app, other.client_app);
+    swap(client_app_version, other.client_app_version);
+    swap(full_platform, other.full_platform);
+    swap(web_browser, other.web_browser);
+    swap(user_agent, other.user_agent);
+    swap(search_engine_host, other.search_engine_host);
+    swap(country_code, other.country_code);
+    swap(page_keywords_present, other.page_keywords_present);
+    swap(platforms, other.platforms);
+    swap(platform_channels, other.platform_channels);
+  }
+
+  const std::shared_ptr<Generics::MonoAllocatorArena>&
+  CampaignManagerLogger::AnonymousRequestInfo::arena() const noexcept
+  {
+    return arena_;
+  }
+
+  CampaignManagerLogger::RequestInfo::RequestInfo()
+    : RequestInfo(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::RequestInfo::RequestInfo(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : AnonymousRequestInfo(std::move(arena)),
+      external_id(decltype(external_id)::allocator_type(this->arena().get())),
+      geo_channels(decltype(geo_channels)::allocator_type(this->arena().get())),
+      page_triggers(decltype(page_triggers)::allocator_type(this->arena().get())),
+      search_triggers(decltype(search_triggers)::allocator_type(this->arena().get())),
+      url_triggers(decltype(url_triggers)::allocator_type(this->arena().get())),
+      url_keyword_triggers(decltype(url_keyword_triggers)::allocator_type(this->arena().get())),
+      triggered_channels(this->arena()),
+      hid_history_channels(decltype(hid_history_channels)::allocator_type(this->arena().get())),
+      history_channels(decltype(history_channels)::allocator_type(this->arena().get())),
+      referer(decltype(referer)::allocator_type(this->arena().get())),
+      urls(decltype(urls)::allocator_type(this->arena().get())),
+      hit_keywords(decltype(hit_keywords)::allocator_type(this->arena().get())),
+      ip_hash(decltype(ip_hash)::allocator_type(this->arena().get())),
+      additional_info(decltype(additional_info)::allocator_type(this->arena().get()))
+  {}
+
+  CampaignManagerLogger::RequestInfo::RequestInfo(
+    const RequestInfo& other, std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : AnonymousRequestInfo(other, std::move(arena)),
+      is_ad_request(other.is_ad_request),
+      request_id(other.request_id),
+      household_id(other.household_id),
+      user_id(other.user_id),
+      merged_user_id(other.merged_user_id),
+      external_id(other.external_id, decltype(external_id)::allocator_type(this->arena().get())),
+      request_user_id(other.request_user_id),
+      request_user_status(other.request_user_status),
+      fraud(other.fraud),
+      disable_fraud_detection(other.disable_fraud_detection),
+      track_passback(other.track_passback),
+      geo_channels(other.geo_channels, decltype(geo_channels)::allocator_type(this->arena().get())),
+      page_triggers(
+        other.page_triggers, decltype(page_triggers)::allocator_type(this->arena().get())),
+      search_triggers(
+        other.search_triggers, decltype(search_triggers)::allocator_type(this->arena().get())),
+      url_triggers(other.url_triggers, decltype(url_triggers)::allocator_type(this->arena().get())),
+      url_keyword_triggers(
+        other.url_keyword_triggers,
+        decltype(url_keyword_triggers)::allocator_type(this->arena().get())),
+      triggered_channels(other.triggered_channels, this->arena()),
+      hid_history_channels(
+        other.hid_history_channels,
+        decltype(hid_history_channels)::allocator_type(this->arena().get())),
+      history_channels(
+        other.history_channels, decltype(history_channels)::allocator_type(this->arena().get())),
+      last_platform_channel_id(other.last_platform_channel_id),
+      full_referer_hash(other.full_referer_hash),
+      short_referer_hash(other.short_referer_hash),
+      referer(other.referer, decltype(referer)::allocator_type(this->arena().get())),
+      urls(other.urls, decltype(urls)::allocator_type(this->arena().get())),
+      profile_referer(other.profile_referer),
+      hit_keywords(other.hit_keywords, decltype(hit_keywords)::allocator_type(this->arena().get())),
+      ip_hash(other.ip_hash, decltype(ip_hash)::allocator_type(this->arena().get())),
+      page_keywords(other.page_keywords),
+      url_keywords(other.url_keywords),
+      additional_info(
+        other.additional_info, decltype(additional_info)::allocator_type(this->arena().get())),
+      random(other.random)
+  {}
+
+  CampaignManagerLogger::RequestInfo::RequestInfo(const RequestInfo& other)
+    : RequestInfo(other, std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::RequestInfo::RequestInfo(RequestInfo&&) noexcept = default;
+
+  CampaignManagerLogger::RequestInfo&
+  CampaignManagerLogger::RequestInfo::operator=(const RequestInfo& other)
+  {
+    if (this != &other)
+    {
+      RequestInfo replacement(other);
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  CampaignManagerLogger::RequestInfo&
+  CampaignManagerLogger::RequestInfo::operator=(RequestInfo&& other) noexcept
+  {
+    if (this != &other)
+    {
+      RequestInfo replacement(std::move(other));
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  void CampaignManagerLogger::RequestInfo::swap(RequestInfo& other) noexcept
+  {
+    using std::swap;
+    AnonymousRequestInfo::swap(other);
+    swap(is_ad_request, other.is_ad_request);
+    swap(request_id, other.request_id);
+    swap(household_id, other.household_id);
+    swap(user_id, other.user_id);
+    swap(merged_user_id, other.merged_user_id);
+    swap(external_id, other.external_id);
+    swap(request_user_id, other.request_user_id);
+    swap(request_user_status, other.request_user_status);
+    swap(fraud, other.fraud);
+    swap(disable_fraud_detection, other.disable_fraud_detection);
+    swap(track_passback, other.track_passback);
+    swap(geo_channels, other.geo_channels);
+    swap(page_triggers, other.page_triggers);
+    swap(search_triggers, other.search_triggers);
+    swap(url_triggers, other.url_triggers);
+    swap(url_keyword_triggers, other.url_keyword_triggers);
+    triggered_channels.swap(other.triggered_channels);
+    swap(hid_history_channels, other.hid_history_channels);
+    swap(history_channels, other.history_channels);
+    swap(last_platform_channel_id, other.last_platform_channel_id);
+    swap(full_referer_hash, other.full_referer_hash);
+    swap(short_referer_hash, other.short_referer_hash);
+    swap(referer, other.referer);
+    swap(urls, other.urls);
+    swap(profile_referer, other.profile_referer);
+    swap(hit_keywords, other.hit_keywords);
+    swap(ip_hash, other.ip_hash);
+    swap(page_keywords, other.page_keywords);
+    swap(url_keywords, other.url_keywords);
+    swap(additional_info, other.additional_info);
+    swap(random, other.random);
+  }
+
   CampaignManagerLogger::TriggeredChannels::~TriggeredChannels() noexcept
   {}
 
@@ -425,6 +736,372 @@ namespace AdServer::CampaignSvcs
       time(time_val),
       user_id_hash_mod(user_id_hash_mod_val)
   {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo()
+    : AdSelectionInfo(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      channels(decltype(channels)::allocator_type(arena_.get())),
+      expression(decltype(expression)::allocator_type(arena_.get())),
+      cmp_channels(decltype(cmp_channels)::allocator_type(arena_.get())),
+      keyword_ccg_ids(decltype(keyword_ccg_ids)::allocator_type(arena_.get())),
+      ctr_algorithm_id(decltype(ctr_algorithm_id)::allocator_type(arena_.get())),
+      conv_rate_algorithm_id(decltype(conv_rate_algorithm_id)::allocator_type(arena_.get())),
+      model_ctrs(decltype(model_ctrs)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(const AdSelectionInfo& other)
+    : AdSelectionInfo(other, std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(
+    const AdSelectionInfo& other, std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      adv_time(other.adv_time),
+      ad_selected(other.ad_selected),
+      request_id(other.request_id),
+      log_as_test(other.log_as_test),
+      cc_id(other.cc_id),
+      campaign_id(other.campaign_id),
+      ccg_id(other.ccg_id),
+      ctr_reset_id(other.ctr_reset_id),
+      adv_account_id(other.adv_account_id),
+      advertiser_id(other.advertiser_id),
+      tag_delivery_threshold(other.tag_delivery_threshold),
+      has_custom_actions(other.has_custom_actions),
+      currency_exchange_id(other.currency_exchange_id),
+      ecpm(other.ecpm),
+      ecpm_bid(other.ecpm_bid),
+      external_ecpm_bid(other.external_ecpm_bid),
+      tag_ecpm(other.tag_ecpm),
+      adv_currency_rate(other.adv_currency_rate),
+      adv_revenue(other.adv_revenue),
+      adv_payable_comm_revenue(other.adv_payable_comm_revenue),
+      adv_comm_revenue(other.adv_comm_revenue),
+      pub_currency_rate(other.pub_currency_rate),
+      pub_commission(other.pub_commission),
+      pub_revenue(other.pub_revenue),
+      pub_comm_revenue(other.pub_comm_revenue),
+      isp_currency_rate(other.isp_currency_rate),
+      isp_revenue(other.isp_revenue),
+      isp_revenue_share(other.isp_revenue_share),
+      num_shown(other.num_shown),
+      position(other.position),
+      channels(other.channels, decltype(channels)::allocator_type(arena_.get())),
+      expression(other.expression, decltype(expression)::allocator_type(arena_.get())),
+      text_campaign(other.text_campaign),
+      ccg_keyword_id(other.ccg_keyword_id),
+      keyword_channel_id(other.keyword_channel_id),
+      enabled_notice(other.enabled_notice),
+      enabled_impression_tracking(other.enabled_impression_tracking),
+      enabled_action_tracking(other.enabled_action_tracking),
+      cmp_channels(other.cmp_channels, decltype(cmp_channels)::allocator_type(arena_.get())),
+      keyword_ccg_ids(
+        other.keyword_ccg_ids, decltype(keyword_ccg_ids)::allocator_type(arena_.get())),
+      ctr_algorithm_id(
+        other.ctr_algorithm_id, decltype(ctr_algorithm_id)::allocator_type(arena_.get())),
+      ctr(other.ctr),
+      conv_rate_algorithm_id(
+        other.conv_rate_algorithm_id,
+        decltype(conv_rate_algorithm_id)::allocator_type(arena_.get())),
+      conv_rate(other.conv_rate),
+      expected_post_actions(other.expected_post_actions),
+      campaign_imps(other.campaign_imps),
+      model_ctrs(other.model_ctrs, decltype(model_ctrs)::allocator_type(arena_.get())),
+      adv_commission(other.adv_commission),
+      self_service_commission(other.self_service_commission),
+      pub_cost_coef(other.pub_cost_coef),
+      at_flags(other.at_flags)
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(AdSelectionInfo&&) noexcept = default;
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(const allocator_type& allocator)
+    : AdSelectionInfo(allocator.arena_owner())
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(
+    const AdSelectionInfo& other, const allocator_type& allocator)
+    : AdSelectionInfo(other, allocator.arena_owner())
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo::AdSelectionInfo(
+    AdSelectionInfo&& other, const allocator_type& allocator)
+    : arena_(allocator.arena_owner() ?
+        allocator.arena_owner() : std::make_shared<Generics::MonoAllocatorArena>()),
+      adv_time(other.adv_time),
+      ad_selected(other.ad_selected),
+      request_id(other.request_id),
+      log_as_test(other.log_as_test),
+      cc_id(other.cc_id),
+      campaign_id(other.campaign_id),
+      ccg_id(other.ccg_id),
+      ctr_reset_id(other.ctr_reset_id),
+      adv_account_id(other.adv_account_id),
+      advertiser_id(other.advertiser_id),
+      tag_delivery_threshold(other.tag_delivery_threshold),
+      has_custom_actions(other.has_custom_actions),
+      currency_exchange_id(other.currency_exchange_id),
+      ecpm(other.ecpm),
+      ecpm_bid(other.ecpm_bid),
+      external_ecpm_bid(other.external_ecpm_bid),
+      tag_ecpm(other.tag_ecpm),
+      adv_currency_rate(other.adv_currency_rate),
+      adv_revenue(other.adv_revenue),
+      adv_payable_comm_revenue(other.adv_payable_comm_revenue),
+      adv_comm_revenue(other.adv_comm_revenue),
+      pub_currency_rate(other.pub_currency_rate),
+      pub_commission(other.pub_commission),
+      pub_revenue(other.pub_revenue),
+      pub_comm_revenue(other.pub_comm_revenue),
+      isp_currency_rate(other.isp_currency_rate),
+      isp_revenue(other.isp_revenue),
+      isp_revenue_share(other.isp_revenue_share),
+      num_shown(other.num_shown),
+      position(other.position),
+      channels(std::move(other.channels), decltype(channels)::allocator_type(arena_.get())),
+      expression(std::move(other.expression), decltype(expression)::allocator_type(arena_.get())),
+      text_campaign(other.text_campaign),
+      ccg_keyword_id(other.ccg_keyword_id),
+      keyword_channel_id(other.keyword_channel_id),
+      enabled_notice(other.enabled_notice),
+      enabled_impression_tracking(other.enabled_impression_tracking),
+      enabled_action_tracking(other.enabled_action_tracking),
+      cmp_channels(
+        std::move(other.cmp_channels), decltype(cmp_channels)::allocator_type(arena_.get())),
+      keyword_ccg_ids(
+        std::move(other.keyword_ccg_ids), decltype(keyword_ccg_ids)::allocator_type(arena_.get())),
+      ctr_algorithm_id(
+        std::move(other.ctr_algorithm_id),
+        decltype(ctr_algorithm_id)::allocator_type(arena_.get())),
+      ctr(other.ctr),
+      conv_rate_algorithm_id(
+        std::move(other.conv_rate_algorithm_id),
+        decltype(conv_rate_algorithm_id)::allocator_type(arena_.get())),
+      conv_rate(other.conv_rate),
+      expected_post_actions(std::move(other.expected_post_actions)),
+      campaign_imps(other.campaign_imps),
+      model_ctrs(std::move(other.model_ctrs), decltype(model_ctrs)::allocator_type(arena_.get())),
+      adv_commission(other.adv_commission),
+      self_service_commission(other.self_service_commission),
+      pub_cost_coef(other.pub_cost_coef),
+      at_flags(other.at_flags)
+  {}
+
+  CampaignManagerLogger::AdSelectionInfo&
+  CampaignManagerLogger::AdSelectionInfo::operator=(const AdSelectionInfo& other)
+  {
+    if (this != &other)
+    {
+      AdSelectionInfo replacement(other, arena_);
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  CampaignManagerLogger::AdSelectionInfo&
+  CampaignManagerLogger::AdSelectionInfo::operator=(AdSelectionInfo&& other)
+  {
+    if (this != &other)
+    {
+      AdSelectionInfo replacement(std::move(other), allocator_type(arena_));
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  void CampaignManagerLogger::AdSelectionInfo::swap(AdSelectionInfo& other) noexcept
+  {
+    using std::swap;
+    swap(arena_, other.arena_);
+    swap(adv_time, other.adv_time);
+    swap(ad_selected, other.ad_selected);
+    swap(request_id, other.request_id);
+    swap(log_as_test, other.log_as_test);
+    swap(cc_id, other.cc_id);
+    swap(campaign_id, other.campaign_id);
+    swap(ccg_id, other.ccg_id);
+    swap(ctr_reset_id, other.ctr_reset_id);
+    swap(adv_account_id, other.adv_account_id);
+    swap(advertiser_id, other.advertiser_id);
+    swap(tag_delivery_threshold, other.tag_delivery_threshold);
+    swap(has_custom_actions, other.has_custom_actions);
+    swap(currency_exchange_id, other.currency_exchange_id);
+    swap(ecpm, other.ecpm);
+    swap(ecpm_bid, other.ecpm_bid);
+    swap(external_ecpm_bid, other.external_ecpm_bid);
+    swap(tag_ecpm, other.tag_ecpm);
+    swap(adv_currency_rate, other.adv_currency_rate);
+    swap(adv_revenue, other.adv_revenue);
+    swap(adv_payable_comm_revenue, other.adv_payable_comm_revenue);
+    swap(adv_comm_revenue, other.adv_comm_revenue);
+    swap(pub_currency_rate, other.pub_currency_rate);
+    swap(pub_commission, other.pub_commission);
+    swap(pub_revenue, other.pub_revenue);
+    swap(pub_comm_revenue, other.pub_comm_revenue);
+    swap(isp_currency_rate, other.isp_currency_rate);
+    swap(isp_revenue, other.isp_revenue);
+    swap(isp_revenue_share, other.isp_revenue_share);
+    swap(num_shown, other.num_shown);
+    swap(position, other.position);
+    swap(channels, other.channels);
+    swap(expression, other.expression);
+    swap(text_campaign, other.text_campaign);
+    swap(ccg_keyword_id, other.ccg_keyword_id);
+    swap(keyword_channel_id, other.keyword_channel_id);
+    swap(enabled_notice, other.enabled_notice);
+    swap(enabled_impression_tracking, other.enabled_impression_tracking);
+    swap(enabled_action_tracking, other.enabled_action_tracking);
+    swap(cmp_channels, other.cmp_channels);
+    swap(keyword_ccg_ids, other.keyword_ccg_ids);
+    swap(ctr_algorithm_id, other.ctr_algorithm_id);
+    swap(ctr, other.ctr);
+    swap(conv_rate_algorithm_id, other.conv_rate_algorithm_id);
+    swap(conv_rate, other.conv_rate);
+    swap(expected_post_actions, other.expected_post_actions);
+    swap(campaign_imps, other.campaign_imps);
+    swap(model_ctrs, other.model_ctrs);
+    swap(adv_commission, other.adv_commission);
+    swap(self_service_commission, other.self_service_commission);
+    swap(pub_cost_coef, other.pub_cost_coef);
+    swap(at_flags, other.at_flags);
+  }
+
+  const std::shared_ptr<Generics::MonoAllocatorArena>&
+  CampaignManagerLogger::AdSelectionInfo::arena() const noexcept
+  {
+    return arena_;
+  }
+
+  CampaignManagerLogger::AdRequestSelectionInfo::AdRequestSelectionInfo()
+    : AdRequestSelectionInfo(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AdRequestSelectionInfo::AdRequestSelectionInfo(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      ext_tag_id(decltype(ext_tag_id)::allocator_type(arena_.get())),
+      tag_size(decltype(tag_size)::allocator_type(arena_.get())),
+      tag_sizes(decltype(tag_sizes)::allocator_type(arena_.get())),
+      ad_selection_info_list(
+        decltype(ad_selection_info_list)::allocator_type(
+          Commons::SharedMonoAllocator<AdSelectionInfo>(arena_))),
+      lost_auction_ccgs(decltype(lost_auction_ccgs)::allocator_type(arena_.get())),
+      lost_auction_creatives(decltype(lost_auction_creatives)::allocator_type(arena_.get()))
+  {}
+
+  CampaignManagerLogger::AdRequestSelectionInfo::AdRequestSelectionInfo(
+    const AdRequestSelectionInfo& other)
+    : AdRequestSelectionInfo(other, std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  CampaignManagerLogger::AdRequestSelectionInfo::AdRequestSelectionInfo(
+    const AdRequestSelectionInfo& other, std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      pub_time(other.pub_time),
+      pub_account_id(other.pub_account_id),
+      site_id(other.site_id),
+      request_tag_id(other.request_tag_id),
+      tag_id(other.tag_id),
+      size_id(other.size_id),
+      site_rate_id(other.site_rate_id),
+      ext_tag_id(other.ext_tag_id, decltype(ext_tag_id)::allocator_type(arena_.get())),
+      page_load_id(other.page_load_id),
+      tag_visibility(other.tag_visibility),
+      tag_top_offset(other.tag_top_offset),
+      tag_left_offset(other.tag_left_offset),
+      max_ads(other.max_ads),
+      tag_size(other.tag_size, decltype(tag_size)::allocator_type(arena_.get())),
+      tag_sizes(other.tag_sizes, decltype(tag_sizes)::allocator_type(arena_.get())),
+      cpm_threshold(other.cpm_threshold),
+      floor_cost(other.floor_cost),
+      walled_garden(other.walled_garden),
+      household_based(other.household_based),
+      auction_type(other.auction_type),
+      min_no_adv_ecpm(other.min_no_adv_ecpm),
+      min_text_ecpm(other.min_text_ecpm),
+      text_campaigns(other.text_campaigns),
+      ad_selection_info_list(
+        other.ad_selection_info_list, decltype(ad_selection_info_list)::allocator_type(
+          Commons::SharedMonoAllocator<AdSelectionInfo>(arena_))),
+      lost_auction_ccgs(
+        other.lost_auction_ccgs, decltype(lost_auction_ccgs)::allocator_type(arena_.get())),
+      lost_auction_creatives(
+        other.lost_auction_creatives,
+        decltype(lost_auction_creatives)::allocator_type(arena_.get())),
+      tag_predicted_viewability(other.tag_predicted_viewability)
+  {}
+
+  CampaignManagerLogger::AdRequestSelectionInfo::AdRequestSelectionInfo(AdRequestSelectionInfo&&)
+    noexcept = default;
+
+  CampaignManagerLogger::AdRequestSelectionInfo&
+  CampaignManagerLogger::AdRequestSelectionInfo::operator=(const AdRequestSelectionInfo& other)
+  {
+    if (this != &other)
+    {
+      AdRequestSelectionInfo replacement(other);
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  CampaignManagerLogger::AdRequestSelectionInfo&
+  CampaignManagerLogger::AdRequestSelectionInfo::operator=(AdRequestSelectionInfo&& other) noexcept
+  {
+    if (this != &other)
+    {
+      AdRequestSelectionInfo replacement(std::move(other));
+      swap(replacement);
+    }
+
+    return *this;
+  }
+
+  void CampaignManagerLogger::AdRequestSelectionInfo::swap(AdRequestSelectionInfo& other) noexcept
+  {
+    using std::swap;
+    swap(arena_, other.arena_);
+    swap(pub_time, other.pub_time);
+    swap(pub_account_id, other.pub_account_id);
+    swap(site_id, other.site_id);
+    swap(request_tag_id, other.request_tag_id);
+    swap(tag_id, other.tag_id);
+    swap(size_id, other.size_id);
+    swap(site_rate_id, other.site_rate_id);
+    swap(ext_tag_id, other.ext_tag_id);
+    swap(page_load_id, other.page_load_id);
+    swap(tag_visibility, other.tag_visibility);
+    swap(tag_top_offset, other.tag_top_offset);
+    swap(tag_left_offset, other.tag_left_offset);
+    swap(max_ads, other.max_ads);
+    swap(tag_size, other.tag_size);
+    swap(tag_sizes, other.tag_sizes);
+    swap(cpm_threshold, other.cpm_threshold);
+    swap(floor_cost, other.floor_cost);
+    swap(walled_garden, other.walled_garden);
+    swap(household_based, other.household_based);
+    swap(auction_type, other.auction_type);
+    swap(min_no_adv_ecpm, other.min_no_adv_ecpm);
+    swap(min_text_ecpm, other.min_text_ecpm);
+    swap(text_campaigns, other.text_campaigns);
+    swap(ad_selection_info_list, other.ad_selection_info_list);
+    swap(lost_auction_ccgs, other.lost_auction_ccgs);
+    swap(lost_auction_creatives, other.lost_auction_creatives);
+    swap(tag_predicted_viewability, other.tag_predicted_viewability);
+  }
+
+  const std::shared_ptr<Generics::MonoAllocatorArena>&
+  CampaignManagerLogger::AdRequestSelectionInfo::arena() const noexcept
+  {
+    return arena_;
+  }
 
   CampaignManagerLogger::AdSelectionInfo::Revenue::Revenue()
     : rate_id(0),
@@ -1719,7 +2396,7 @@ namespace AdServer::CampaignSvcs
             LogProcessing::StringList(
               ad_selection_info->tag_sizes.begin(),
               ad_selection_info->tag_sizes.end()), // ad_request_sizes
-            request_info.country_code,
+            std::string_view(request_info.country_code),
             ad_selection_info->max_ads,
             cost_threshold,
             std::move(display_ad_shown),
@@ -1751,13 +2428,17 @@ namespace AdServer::CampaignSvcs
             AdServer::LogProcessing::NumberArray(
               request_info.history_channels.begin(), request_info.history_channels.end()) :
             AdServer::LogProcessing::NumberArray(),
-          dump_triggers ? request_info.page_triggers :
+          dump_triggers ? CollectorT::DataT::DataT::TriggerMatchArray(
+              request_info.page_triggers.begin(), request_info.page_triggers.end()) :
             CollectorT::DataT::DataT::TriggerMatchArray(),
-          dump_triggers ? request_info.search_triggers :
+          dump_triggers ? CollectorT::DataT::DataT::TriggerMatchArray(
+              request_info.search_triggers.begin(), request_info.search_triggers.end()) :
             CollectorT::DataT::DataT::TriggerMatchArray(),
-          dump_triggers ? request_info.url_triggers :
+          dump_triggers ? CollectorT::DataT::DataT::TriggerMatchArray(
+              request_info.url_triggers.begin(), request_info.url_triggers.end()) :
             CollectorT::DataT::DataT::TriggerMatchArray(),
-          dump_triggers ? request_info.url_keyword_triggers :
+          dump_triggers ? CollectorT::DataT::DataT::TriggerMatchArray(
+              request_info.url_keyword_triggers.begin(), request_info.url_keyword_triggers.end()) :
             CollectorT::DataT::DataT::TriggerMatchArray());
 
         data.add(
@@ -1768,8 +2449,9 @@ namespace AdServer::CampaignSvcs
             temporary_user_id,
             std::move(match_request),
             std::move(ad_request_opt),
-            request_info.external_id,
-            dump_navigation ? request_info.referer : EMPTY_USER_NAVIGATION_DATA,
+            std::string_view(request_info.external_id),
+            dump_navigation ? std::string_view(request_info.referer) :
+              std::string_view(EMPTY_USER_NAVIGATION_DATA),
             page_keywords,
             sampling_mask));
 
@@ -2151,13 +2833,17 @@ namespace AdServer::CampaignSvcs
             UserPropertyList user_properties;
             user_properties.push_back(
               UserProperty(
-                PropertyNames::CLIENT_APP_VERSION.text(), request_info.client_app_version));
+                PropertyNames::CLIENT_APP_VERSION.text(),
+                std::string_view(request_info.client_app_version)));
             user_properties.push_back(
-              UserProperty(PropertyNames::CLIENT_APP.text(), request_info.client_app));
+              UserProperty(
+                PropertyNames::CLIENT_APP.text(), std::string_view(request_info.client_app)));
             user_properties.push_back(
-              UserProperty(PropertyNames::OS_VERSION.text(), request_info.full_platform));
+              UserProperty(
+                PropertyNames::OS_VERSION.text(), std::string_view(request_info.full_platform)));
             user_properties.push_back(
-              UserProperty(PropertyNames::BROWSER_VERSION.text(), request_info.web_browser));
+              UserProperty(
+                PropertyNames::BROWSER_VERSION.text(), std::string_view(request_info.web_browser)));
 
             LogProcessing::RequestData::CmpChannelList cmp_channel_list;
             std::transform(
@@ -2189,10 +2875,10 @@ namespace AdServer::CampaignSvcs
               request_info.colo_id,
               ad_ri.site_id,
               ad_ri.tag_id,
-              ad_ri.ext_tag_id,
+              std::string_view(ad_ri.ext_tag_id),
               ad_ri.pub_account_id,
-              request_info.country_code,
-              request_info.ip_hash,
+              std::string_view(request_info.country_code),
+              std::string_view(request_info.ip_hash),
               ad_info.adv_account_id,
               ad_info.advertiser_id,
               ad_info.cc_id,
@@ -2216,7 +2902,7 @@ namespace AdServer::CampaignSvcs
               AdServer::LogProcessing::NumberArray(
                 request_info.history_channels.begin(),
                 request_info.history_channels.end()),
-              ad_info.expression,
+              std::string_view(ad_info.expression),
               std::move(cmp_channel_list),
               ad_info.ccg_keyword_id,
               ad_info.keyword_channel_id,
@@ -2241,7 +2927,7 @@ namespace AdServer::CampaignSvcs
               request_info.last_platform_channel_id ?
               LogProcessing::OptionalValue<unsigned long>(request_info.last_platform_channel_id) :
                 LogProcessing::OptionalValue<unsigned long>(),
-              ad_ri.tag_size,
+              std::string_view(ad_ri.tag_size),
               ad_ri.size_id,
               ad_ri.household_based,
               ad_ri.tag_visibility.present() ?
@@ -2255,7 +2941,7 @@ namespace AdServer::CampaignSvcs
                 OptionalUInt32(),
               ad_info.ctr_reset_id,
               ad_info.campaign_imps,
-              request_info.referer,
+              std::string_view(request_info.referer),
               ad_info.adv_currency_rate,
               ad_info.pub_currency_rate,
               ad_info.pub_commission,
@@ -2263,20 +2949,20 @@ namespace AdServer::CampaignSvcs
               ad_info.isp_revenue_share,
               ad_info.external_ecpm_bid,
               ad_info.position == 1 ? ad_ri.floor_cost : RevenueDecimal::ZERO,
-              ad_info.ctr_algorithm_id,
+              std::string_view(ad_info.ctr_algorithm_id),
               ad_info.ctr,
               (request_info.short_referer_hash.present() ?
                 *request_info.short_referer_hash : 0), // FIXME: short_referer_hash for RequestsLogs
               ad_ri.auction_type,
-              ad_info.conv_rate_algorithm_id,
+              std::string_view(ad_info.conv_rate_algorithm_id),
               ad_info.conv_rate,
               ad_ri.tag_predicted_viewability,
-              ad_info.model_ctrs,
+              LogProcessing::FixedNumberList(ad_info.model_ctrs.begin(), ad_info.model_ctrs.end()),
               ad_info.self_service_commission,
               ad_info.adv_commission,
               ad_info.pub_cost_coef,
               ad_info.at_flags,
-              request_info.additional_info,
+              std::string_view(request_info.additional_info),
               request_info.page_keywords.in() ?
                 request_info.page_keywords->str() : EMPTY_USER_NAVIGATION_DATA,
               ad_info.expected_post_actions
@@ -2513,15 +3199,15 @@ namespace AdServer::CampaignSvcs
             AdServer::LogProcessing::OptionalUInt32(), // FIXME: size_id
             "", // ext_tag_id
             request_info.referer.empty() ?
-              EMPTY_REFERER_ : request_info.referer,
+              std::string_view(EMPTY_REFERER_) : std::string_view(request_info.referer),
             request_info.full_referer_hash.present() ?
               AdServer::LogProcessing::OptionalUInt64(*request_info.full_referer_hash) :
               AdServer::LogProcessing::OptionalUInt64(),
             adapt_user_status(request_info.user_status),
-            request_info.country_code,
+            std::string_view(request_info.country_code),
             AdServer::Commons::RequestId(), // passback_request_id
             RevenueDecimal::ZERO, // floor_cost,
-            request_info.urls,
+            LogProcessing::StringArray(request_info.urls.begin(), request_info.urls.end()),
             std::move(opt_in));
 
           add_record(std::move(data));
@@ -2575,19 +3261,19 @@ namespace AdServer::CampaignSvcs
             ad_ri.tag_id,
             ad_ri.site_id,
             ad_ri.size_id,
-            ad_ri.ext_tag_id,
+            std::string_view(ad_ri.ext_tag_id),
             request_info.referer.empty() ?
-              EMPTY_REFERER_ : request_info.referer,
+              std::string_view(EMPTY_REFERER_) : std::string_view(request_info.referer),
             request_info.full_referer_hash.present() ?
               AdServer::LogProcessing::OptionalUInt64(*request_info.full_referer_hash) :
               AdServer::LogProcessing::OptionalUInt64(),
             adapt_user_status(request_info.user_status),
-            request_info.country_code,
+            std::string_view(request_info.country_code),
             ad_shown ? AdServer::Commons::RequestId() : (
               request_info.track_passback ? request_info.request_id :
                 AdServer::Commons::RequestId()),
             ad_ri.floor_cost,
-            request_info.urls,
+            LogProcessing::StringArray(request_info.urls.begin(), request_info.urls.end()),
             std::move(opt_in));
 
           add_record(std::move(data));
@@ -2753,7 +3439,8 @@ namespace AdServer::CampaignSvcs
       {
         CollectorT::DataT data;
         data.add(
-          CollectorT::DataT::KeyT(request_info.search_engine_id, request_info.search_engine_host),
+          CollectorT::DataT::KeyT(
+            request_info.search_engine_id, std::string_view(request_info.search_engine_host)),
           request_info.page_keywords_present ? STAT_HITS_ONE_ : STAT_EMPTY_PAGE_HITS_ONE_);
         add_record(CollectorT::KeyT(request_info.time, request_info.colo_id), std::move(data));
       }
@@ -2784,31 +3471,136 @@ namespace AdServer::CampaignSvcs
   class CampaignManagerLogger::Impl: public Generics::SimpleActiveObject
   {
   public:
-    Impl(CampaignManagerLogger& owner, Logging::Logger* logger, unsigned long threads)
-      : owner_(owner),
-        logger_(ReferenceCounting::add_ref(logger)),
-        threads_(std::max<unsigned long>(threads, 1)),
-        queue_total_(0),
-        processing_tasks_(0),
-        processing_requests_total_(0),
-        pending_tasks_(0),
-        next_queue_(0),
-        queue_closed_(true)
+    struct RequestTask
     {
-      queue_shards_.reserve(threads_);
-      for (unsigned long i = 0; i < threads_; ++i)
-      {
-        queue_shards_.emplace_back(std::make_unique<QueueShard>());
-      }
-    }
+      std::shared_ptr<const RequestInfo> request_info;
+      unsigned long profiling_type;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct RequestSnapshotTask
+    {
+      RequestInfoLogSnapshot snapshot;
+      unsigned long profiling_type;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct AnonymousRequestTask
+    {
+      AnonymousRequestInfo request_info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct MatchRequestTask
+    {
+      MatchRequestInfo request_info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct AdRequestInfoTask
+    {
+      std::shared_ptr<const RequestInfo> request_info;
+      AdRequestSelectionInfo selection_info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct AdRequestTask
+    {
+      AdRequestSelectionLogSnapshot snapshot;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct ImpressionTask
+    {
+      ImpressionInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct ClickTask
+    {
+      ClickInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct ActionTask
+    {
+      AdvActionInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct NavigationTask
+    {
+      NavigationInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct PassbackTask
+    {
+      PassbackInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct PassbackTrackTask
+    {
+      PassbackTrackInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct WebOperationTask
+    {
+      WebOperationInfo info;
+
+      void execute(Impl& impl) const;
+    };
+
+    struct OptOperationTask
+    {
+      unsigned long colo_id;
+      Generics::Time time;
+      Generics::Time time_offset;
+      AdServer::Commons::UserId user_id;
+      bool log_as_test;
+      char operation;
+
+      void execute(Impl& impl) const;
+    };
+
+    using Task = std::variant<
+      std::unique_ptr<RequestTask>,
+      std::unique_ptr<RequestSnapshotTask>,
+      std::unique_ptr<AnonymousRequestTask>,
+      std::unique_ptr<MatchRequestTask>,
+      std::unique_ptr<AdRequestInfoTask>,
+      std::unique_ptr<AdRequestTask>,
+      std::unique_ptr<ImpressionTask>,
+      std::unique_ptr<ClickTask>,
+      std::unique_ptr<ActionTask>,
+      std::unique_ptr<NavigationTask>,
+      std::unique_ptr<PassbackTask>,
+      std::unique_ptr<PassbackTrackTask>,
+      std::unique_ptr<WebOperationTask>,
+      std::unique_ptr<OptOperationTask>>;
+
+    Impl(CampaignManagerLogger& owner, Logging::Logger* logger, unsigned long threads);
 
     void
     init_loggers(const Params& params)
       /*throw(Exception)*/;
 
-    void
-    enqueue_task(std::function<void()> task)
-      /*throw(Exception)*/;
+    template<typename TaskType>
+    void enqueue_task(TaskType task) /*throw(Exception)*/;
 
     void
     set_campaign_config(AdInstances::ConstCampaignConfigPtr campaign_config);
@@ -2894,7 +3686,15 @@ namespace AdServer::CampaignSvcs
     notify_workers_() noexcept;
 
   private:
-    using Task = std::function<void()>;
+    void enqueue_task_(Task task) /*throw(Exception)*/;
+
+    struct TaskExecutor
+    {
+      Impl& impl;
+
+      template<typename TaskType>
+      void operator()(const std::unique_ptr<TaskType>& task) const;
+    };
 
     struct QueueShard
     {
@@ -2954,6 +3754,117 @@ namespace AdServer::CampaignSvcs
     UserAgentStatLogger_var user_agent_stat_logger_;
     ProfilingResearchLogger_var profiling_research_logger_;
   };
+
+  CampaignManagerLogger::Impl::Impl(
+    CampaignManagerLogger& owner, Logging::Logger* logger, unsigned long threads)
+    : owner_(owner),
+      logger_(ReferenceCounting::add_ref(logger)),
+      threads_(std::max<unsigned long>(threads, 1)),
+      queue_total_(0),
+      processing_tasks_(0),
+      processing_requests_total_(0),
+      pending_tasks_(0),
+      next_queue_(0),
+      queue_closed_(true)
+  {
+    queue_shards_.reserve(threads_);
+    for (unsigned long i = 0; i < threads_; ++i)
+    {
+      queue_shards_.emplace_back(std::make_unique<QueueShard>());
+    }
+  }
+
+  void CampaignManagerLogger::Impl::RequestTask::execute(Impl& impl) const
+  {
+    impl.process_request(*request_info, profiling_type);
+  }
+
+  void CampaignManagerLogger::Impl::RequestSnapshotTask::execute(Impl& impl) const
+  {
+    const auto campaign_config = impl.get_campaign_config();
+    const auto request_info = snapshot.make_request_info(campaign_config.get());
+    impl.process_request(*request_info, profiling_type);
+  }
+
+  void CampaignManagerLogger::Impl::AnonymousRequestTask::execute(Impl& impl) const
+  {
+    impl.process_anon_request(request_info);
+  }
+
+  void CampaignManagerLogger::Impl::MatchRequestTask::execute(Impl& impl) const
+  {
+    impl.process_match_request(request_info);
+  }
+
+  void CampaignManagerLogger::Impl::AdRequestInfoTask::execute(Impl& impl) const
+  {
+    impl.process_ad_request(*request_info, selection_info);
+  }
+
+  void CampaignManagerLogger::Impl::AdRequestTask::execute(Impl& impl) const
+  {
+    const auto campaign_config = impl.get_campaign_config();
+    for (const auto& ad_slot : snapshot.ad_slots)
+    {
+      auto request_info =
+        snapshot.make_request_info(campaign_config.get(), ad_slot.ad_slot_context);
+      auto selection_info = snapshot.make_ad_request_selection_info(ad_slot, campaign_config.get());
+      impl.process_ad_request(*request_info, selection_info);
+    }
+  }
+
+  void CampaignManagerLogger::Impl::ImpressionTask::execute(Impl& impl) const
+  {
+    impl.process_impression(info);
+  }
+
+  void CampaignManagerLogger::Impl::ClickTask::execute(Impl& impl) const
+  {
+    impl.process_click(info);
+  }
+
+  void CampaignManagerLogger::Impl::ActionTask::execute(Impl& impl) const
+  {
+    impl.process_action(info);
+  }
+
+  void CampaignManagerLogger::Impl::NavigationTask::execute(Impl& impl) const
+  {
+    impl.process_navigation(info);
+  }
+
+  void CampaignManagerLogger::Impl::PassbackTask::execute(Impl& impl) const
+  {
+    impl.process_passback(info);
+  }
+
+  void CampaignManagerLogger::Impl::PassbackTrackTask::execute(Impl& impl) const
+  {
+    impl.process_passback_track(info);
+  }
+
+  void CampaignManagerLogger::Impl::WebOperationTask::execute(Impl& impl) const
+  {
+    impl.process_web_operation(info);
+  }
+
+  void CampaignManagerLogger::Impl::OptOperationTask::execute(Impl& impl) const
+  {
+    impl.process_oo_operation(colo_id, time, time_offset, user_id, log_as_test, operation);
+  }
+
+  template<typename TaskType>
+  void CampaignManagerLogger::Impl::TaskExecutor::operator()(
+    const std::unique_ptr<TaskType>& task) const
+  {
+    task->execute(impl);
+  }
+
+  template<typename TaskType>
+  void CampaignManagerLogger::Impl::enqueue_task(TaskType task) /*throw(Exception)*/
+  {
+    enqueue_task_(std::make_unique<TaskType>(std::move(task)));
+  }
 
   CampaignManagerLogger::CampaignManagerLogger(
     const CampaignManagerLogger::Params& params,
@@ -3079,12 +3990,7 @@ namespace AdServer::CampaignSvcs
     unsigned long profiling_type)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), request_info, profiling_type]()
-      {
-        impl->process_request(*request_info, profiling_type);
-      }
-    );
+    impl_->enqueue_task(Impl::RequestTask{std::move(request_info), profiling_type});
   }
 
   void
@@ -3105,18 +4011,7 @@ namespace AdServer::CampaignSvcs
     snapshot.geo_channels = std::move(geo_channels);
     snapshot.reset_request_user = reset_request_user;
 
-    impl_->enqueue_task(
-      [
-        impl = impl_.get(),
-        snapshot = std::move(snapshot),
-        profiling_type
-      ]()
-      {
-        const auto campaign_config = impl->get_campaign_config();
-        const auto request_info = snapshot.make_request_info(campaign_config.get());
-        impl->process_request(*request_info, profiling_type);
-      }
-    );
+    impl_->enqueue_task(Impl::RequestSnapshotTask{std::move(snapshot), profiling_type});
   }
 
   void
@@ -3143,28 +4038,14 @@ namespace AdServer::CampaignSvcs
     snapshot.geo_channels = std::move(geo_channels);
     snapshot.reset_request_user = reset_request_user;
 
-    impl_->enqueue_task(
-      [
-        impl = impl_.get(),
-        snapshot = std::move(snapshot),
-        profiling_type
-      ]()
-      {
-        const auto campaign_config = impl->get_campaign_config();
-        const auto request_info = snapshot.make_request_info(campaign_config.get());
-        impl->process_request(*request_info, profiling_type);
-      }
-    );
+    impl_->enqueue_task(Impl::RequestSnapshotTask{std::move(snapshot), profiling_type});
   }
 
   void
   CampaignManagerLogger::process_anon_request(const AnonymousRequestInfo& anon_request_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task([impl = impl_.get(), anon_request_info]()
-    {
-      impl->process_anon_request(anon_request_info);
-    });
+    impl_->enqueue_task(Impl::AnonymousRequestTask{anon_request_info});
   }
 
   void
@@ -3172,12 +4053,7 @@ namespace AdServer::CampaignSvcs
     const CampaignManagerLogger::MatchRequestInfo& match_request_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), match_request_info]()
-      {
-        impl->process_match_request(match_request_info);
-      }
-    );
+    impl_->enqueue_task(Impl::MatchRequestTask{match_request_info});
   }
 
   void
@@ -3186,12 +4062,7 @@ namespace AdServer::CampaignSvcs
     const CampaignManagerLogger::AdRequestSelectionInfo& ad_ri)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), ri, ad_ri]()
-      {
-        impl->process_ad_request(*ri, ad_ri);
-      }
-    );
+    impl_->enqueue_task(Impl::AdRequestInfoTask{std::move(ri), ad_ri});
   }
 
   void
@@ -3232,100 +4103,55 @@ namespace AdServer::CampaignSvcs
       snapshot.ad_slots.emplace_back(std::move(slot_snapshot));
     }
 
-    impl_->enqueue_task(
-      [impl = impl_.get(), snapshot = std::move(snapshot)]()
-      {
-        const auto campaign_config = impl->get_campaign_config();
-        for (const auto& ad_slot : snapshot.ad_slots)
-        {
-          auto request_info = snapshot.make_request_info(
-            campaign_config.get(),
-            ad_slot.ad_slot_context);
-          auto ad_request_selection_info =
-            snapshot.make_ad_request_selection_info(ad_slot, campaign_config.get());
-          impl->process_ad_request(*request_info, ad_request_selection_info);
-        }
-      }
-    );
+    impl_->enqueue_task(Impl::AdRequestTask{std::move(snapshot)});
   }
 
   void
   CampaignManagerLogger::process_impression(const ImpressionInfo& impression_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), impression_info]()
-      {
-        impl->process_impression(impression_info);
-      }
-    );
+    impl_->enqueue_task(Impl::ImpressionTask{impression_info});
   }
 
   void
   CampaignManagerLogger::process_click(const ClickInfo& request_id)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task([impl = impl_.get(), request_id]() { impl->process_click(request_id); });
+    impl_->enqueue_task(Impl::ClickTask{request_id});
   }
 
   void
   CampaignManagerLogger::process_action(const AdvActionInfo& adv_action_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), adv_action_info]()
-      {
-        impl->process_action(adv_action_info);
-      }
-    );
+    impl_->enqueue_task(Impl::ActionTask{adv_action_info});
   }
 
   void
   CampaignManagerLogger::process_navigation(const NavigationInfo& navigation_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), navigation_info]()
-      {
-        impl->process_navigation(navigation_info);
-      }
-    );
+    impl_->enqueue_task(Impl::NavigationTask{navigation_info});
   }
 
   void
   CampaignManagerLogger::process_passback(const PassbackInfo& passback_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), passback_info]()
-      {
-        impl->process_passback(passback_info);
-      }
-    );
+    impl_->enqueue_task(Impl::PassbackTask{passback_info});
   }
 
-  void
-  CampaignManagerLogger::process_passback_track(const CampaignManagerLogger::PassbackTrackInfo& passback_track_info)
+  void CampaignManagerLogger::process_passback_track(const PassbackTrackInfo& passback_track_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), passback_track_info]()
-      {
-        impl->process_passback_track(passback_track_info);
-      }
-    );
+    impl_->enqueue_task(Impl::PassbackTrackTask{passback_track_info});
   }
 
   void
   CampaignManagerLogger::process_web_operation(const WebOperationInfo& web_op_info)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), web_op_info]()
-      {
-        impl->process_web_operation(web_op_info);
-      }
-    );
+    impl_->enqueue_task(Impl::WebOperationTask{web_op_info});
   }
 
   void
@@ -3339,19 +4165,7 @@ namespace AdServer::CampaignSvcs
     /*throw(Exception)*/
   {
     impl_->enqueue_task(
-      [
-        impl = impl_.get(),
-        colo_id,
-        time,
-        time_offset,
-        user_id,
-        log_as_test,
-        operation
-      ]()
-      {
-        impl->process_oo_operation(colo_id, time, time_offset, user_id, log_as_test, operation);
-      }
-    );
+      Impl::OptOperationTask{colo_id, time, time_offset, user_id, log_as_test, operation});
   }
 
   void
@@ -3461,11 +4275,11 @@ namespace AdServer::CampaignSvcs
       processing_tasks_.fetch_add(tasks.size(), std::memory_order_acq_rel);
       processing_requests_total_.fetch_add(tasks.size(), std::memory_order_relaxed);
 
-      for (auto& task : tasks)
+      while (!tasks.empty())
       {
         try
         {
-          task();
+          std::visit(TaskExecutor{*this}, tasks.front());
         }
         catch(const eh::Exception& ex)
         {
@@ -3478,9 +4292,11 @@ namespace AdServer::CampaignSvcs
             "CampaignManagerLogger::worker_loop_(): caught unknown exception";
         }
 
+        tasks.pop_front();
         processing_tasks_.fetch_sub(1, std::memory_order_acq_rel);
         if (pending_tasks_.fetch_sub(1, std::memory_order_acq_rel) == 1)
         {
+          std::lock_guard<std::mutex> processing_guard(processing_mutex_);
           processing_cond_.notify_all();
         }
       }
@@ -3531,9 +4347,7 @@ namespace AdServer::CampaignSvcs
     return campaign_config_;
   }
 
-  void
-  CampaignManagerLogger::Impl::enqueue_task(std::function<void()> task)
-    /*throw(Exception)*/
+  void CampaignManagerLogger::Impl::enqueue_task_(Task task) /*throw(Exception)*/
   {
     if (queue_closed_.load(std::memory_order_acquire))
     {
@@ -3568,6 +4382,7 @@ namespace AdServer::CampaignSvcs
       {
         if (pending_tasks_.fetch_sub(1, std::memory_order_acq_rel) == 1)
         {
+          std::lock_guard<std::mutex> processing_guard(processing_mutex_);
           processing_cond_.notify_all();
         }
         throw;

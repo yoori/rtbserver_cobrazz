@@ -4,5 +4,5 @@ add_executable(PrFeatureFilter2
 target_link_libraries(PrFeatureFilter2
   PRIVATE
     Generics
-    Vanga::Headers
+    Vanga::DTree
 )

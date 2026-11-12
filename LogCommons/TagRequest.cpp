@@ -6,6 +6,45 @@
 
 namespace AdServer::LogProcessing
 {
+  TagRequestData::TagRequestData(
+    const SecondsTimestamp& time,
+    const SecondsTimestamp& isp_time,
+    bool test_request,
+    std::uint32_t colo_id,
+    std::uint32_t tag_id,
+    std::uint32_t site_id,
+    const OptionalUInt32& size_id,
+    std::string_view ext_tag_id,
+    std::string_view referer,
+    const OptionalUInt64& full_referer_hash,
+    char user_status,
+    std::string_view country,
+    const RequestId& passback_request_id,
+    const FixedNumber& floor_cost,
+    StringArray urls,
+    OptInSectionOptional opt_in_section)
+    : time_(time),
+      isp_time_(isp_time),
+      test_request_(test_request),
+      colo_id_(colo_id),
+      tag_id_(tag_id),
+      site_id_(site_id),
+      size_id_(size_id),
+      ext_tag_id_(ext_tag_id),
+      referer_(referer),
+      full_referer_hash_(full_referer_hash),
+      user_status_(user_status),
+      country_(country),
+      passback_request_id_(passback_request_id),
+      floor_cost_(floor_cost),
+      urls_(std::move(urls)),
+      opt_in_section_(std::move(opt_in_section)),
+      random_(Generics::safe_rand())
+  {
+    invariant();
+    country_.get().resize(2);
+  }
+
   template <> const char* TagRequestTraits::B::base_name_ = "TagRequest";
   template <> const char* TagRequestTraits::B::signature_ = "TagRequest";
   template <> const char* TagRequestTraits::B::current_version_ = "3.5b";

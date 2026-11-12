@@ -873,41 +873,6 @@ namespace AdServer::CampaignSvcs
     return BillingStateContainer::Stats();
   }
 
-  bool
-  CampaignManagerCore::match_geo_channels_(
-    const CampaignConfig& campaign_config,
-    const std::vector<GeoInfo>& location,
-    const std::vector<GeoCoordInfo>& coord_location,
-    ChannelIdArray& geo_channels,
-    ChannelIdSet& coord_channels)
-    /*throw(NotReady, Exception)*/
-  {
-    if (!location.empty() || !coord_location.empty())
-    {
-      if (!location.empty())
-      {
-        campaign_config.geo_channels->match(
-          geo_channels,
-          String::SubString(location[0].country.c_str()),
-          String::SubString(location[0].region.c_str()),
-          String::SubString(location[0].city.c_str()));
-      }
-
-      for (const auto& coord : coord_location)
-      {
-        campaign_config.geo_coord_channels->match(
-          coord_channels,
-          coord.longitude,
-          coord.latitude,
-          coord.accuracy);
-      }
-
-      return true;
-    }
-
-    return false;
-  }
-
   AdServer::Commons::Awaitable<CampaignManagerCore::GetAdResult>
   CampaignManagerCore::co_get_campaign_creative(GetAdRequest&& core_request_params)
   {
@@ -1017,7 +982,7 @@ namespace AdServer::CampaignSvcs
 
         // ad request
         CreativeInstantiateRuleMap::iterator rule_it = creative_instantiate_.creative_rules.find(
-          core_request_params.common_info->creative_instantiate_type);
+          std::string_view(core_request_params.common_info->creative_instantiate_type));
 
         if (rule_it == creative_instantiate_.creative_rules.end())
         {
@@ -1420,7 +1385,7 @@ namespace AdServer::CampaignSvcs
       }
 
       CreativeInstantiateRuleMap::iterator rule_it = creative_instantiate_.creative_rules.find(
-        instantiate_ad_info.common_info->creative_instantiate_type);
+        std::string_view(instantiate_ad_info.common_info->creative_instantiate_type));
 
       if (rule_it == creative_instantiate_.creative_rules.end())
       {
@@ -1708,8 +1673,8 @@ namespace AdServer::CampaignSvcs
     const Generics::MonoVector<unsigned long>& publisher_account_ids,
     const CampaignConfig& campaign_config,
     unsigned long tag_id,
-    const StringArray& sizes,
-    const StringArray& currency_codes)
+    const ArenaStringArray& sizes,
+    const ArenaStringArray& currency_codes)
     const noexcept
   {
     if (request_type == AR_NORMAL)
@@ -1750,10 +1715,10 @@ namespace AdServer::CampaignSvcs
           auto account_it = campaign_config.accounts.find(*account_id_it);
           if (account_it != campaign_config.accounts.end())
           {
-            for (StringArray::const_iterator currency_it = currency_codes.begin();
+            for (auto currency_it = currency_codes.begin();
               currency_it != currency_codes.end(); ++currency_it)
             {
-              if (account_it->second->currency->currency_code == *currency_it)
+              if (account_it->second->currency->currency_code == std::string_view(*currency_it))
               {
                 allowed_publisher_account_ids.push_back(*account_id_it);
               }
@@ -1773,7 +1738,7 @@ namespace AdServer::CampaignSvcs
       {
         const unsigned long res_publisher_account_id = *acc_it;
 
-        for (StringArray::const_iterator size_it = sizes.begin(); size_it != sizes.end(); ++size_it)
+        for (auto size_it = sizes.begin(); size_it != sizes.end(); ++size_it)
         {
           const CampaignConfig::IdTagMap::const_iterator acc_tag_it =
             campaign_config.account_tags.find(IdTagKey(res_publisher_account_id, size_it->c_str()));
@@ -3297,7 +3262,7 @@ namespace AdServer::CampaignSvcs
       campaign_select_params.user_id = request_params.common_info->user_id;
       campaign_select_params.country_code =
         !request_params.common_info->location.empty() ?
-        request_params.common_info->location[0].country : "";
+        std::string_view(request_params.common_info->location[0].country) : std::string_view();
       campaign_select_params.format = ad_slot.format;
       campaign_select_params.referer_hostname = referer_hostname_str;
       campaign_select_params.original_url = original_url_str;
@@ -3424,8 +3389,7 @@ namespace AdServer::CampaignSvcs
 
       fill_tns_counter_device_type_(ad_slot_context.tns_counter_device_type, norm_platform_names);
 
-      for (TokenArray::const_iterator token_it = ad_slot.tokens.begin();
-          token_it != ad_slot.tokens.end(); ++token_it)
+      for (auto token_it = ad_slot.tokens.begin(); token_it != ad_slot.tokens.end(); ++token_it)
       {
         ad_slot_context.tokens.set_value(token_it->name, token_it->value);
       }
@@ -4447,7 +4411,7 @@ namespace AdServer::CampaignSvcs
     MonoCreativeCategoryIdSet& exclude_categories,
     const CampaignConfig& config,
     unsigned long request_type,
-    const StringArray& categories)
+    const ArenaStringArray& categories)
     noexcept
   {
     AdRequestType reduced_request_type = reduce_request_type_(request_type);
@@ -4459,11 +4423,11 @@ namespace AdServer::CampaignSvcs
     {
       const CampaignConfig::ExternalCategoryNameMap& ext_categories = req_ext_cat_it->second;
 
-      for (StringArray::const_iterator ext_cat_name_it = categories.begin();
+      for (auto ext_cat_name_it = categories.begin();
         ext_cat_name_it != categories.end(); ++ext_cat_name_it)
       {
         CampaignConfig::ExternalCategoryNameMap::const_iterator ext_cat_it =
-          ext_categories.find(*ext_cat_name_it);
+          ext_categories.find(std::string_view(*ext_cat_name_it));
         if (ext_cat_it != ext_categories.end())
         {
           std::copy(ext_cat_it->second.begin(),
@@ -4478,13 +4442,12 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* campaign_config,
     const Tag* tag,
     CampaignKeywordMap& result_keywords,
-    const Generics::MonoVector<CCGKeywordInfo>& keywords,
+    const CCGKeywordArray& keywords,
     bool profiling_available,
     const FreqCapIdSet& full_freq_caps)
     noexcept
   {
-    for (Generics::MonoVector<CCGKeywordInfo>::const_iterator kw_it = keywords.begin();
-      kw_it != keywords.end(); ++kw_it)
+    for (auto kw_it = keywords.begin(); kw_it != keywords.end(); ++kw_it)
     {
       const CCGKeywordInfo& src_keyword = *kw_it;
       CampaignConfig::CampaignMap::const_iterator cmp_it =
@@ -4594,7 +4557,7 @@ namespace AdServer::CampaignSvcs
         CampaignIndex::Key key(tag);
 
         key.country_code = !request_params.common_info->location.empty() ?
-          request_params.common_info->location[0].country : "";
+          std::string_view(request_params.common_info->location[0].country) : std::string_view();
         key.format = ad_slot.format;
         key.user_status =
           (request_params.common_info->user_status == CampaignSvcs::US_OPTIN ||

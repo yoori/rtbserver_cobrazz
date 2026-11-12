@@ -649,8 +649,7 @@ namespace
       "Gecko/20100101 Firefox/73.0";
     fixture.request_info.user_status = US_OPTIN;
     fixture.request_info.track_user_id = AdServer::Commons::UserId::create_random_based();
-    fixture.request_info.tokens.push_back(
-      CampaignManagerCore::TokenInfo{CreativeTokens::TAGID, "bad-tag"});
+    fixture.request_info.tokens.emplace_back(CreativeTokens::TAGID, "bad-tag");
 
     fixture.instantiate_params.generate_pubpixel_accounts = true;
     fixture.instantiate_params.publisher_account_id = 9803;

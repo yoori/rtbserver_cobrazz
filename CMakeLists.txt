@@ -60,7 +60,7 @@ find_package(gRPC REQUIRED)
 find_package(absl REQUIRED)
 find_package(catboost REQUIRED)
 find_package(xgboost CONFIG REQUIRED)
-find_package(Vanga REQUIRED)
+find_package(Vanga 1.0.0.24 CONFIG REQUIRED HINTS /opt/foros/vanga)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(Jemalloc REQUIRED IMPORTED_TARGET jemalloc)

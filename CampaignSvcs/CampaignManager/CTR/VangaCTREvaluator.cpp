@@ -1,7 +1,6 @@
 #include <fstream>
 #include <deque>
 #include <mutex>
-#include <cfloat>
 
 #include <DTree/SVM.hpp>
 #include <DTree/FastFeatureSet.hpp>
@@ -16,6 +15,8 @@ namespace AdServer::CampaignSvcs::CTR
     public Vanga::FastFeatureSet,
     public ReferenceCounting::AtomicImpl
   {
+    auto get(uint32_t feature_id) const;
+
   protected:
     virtual ~FastFeatureSetHolder() noexcept
     {}
@@ -23,6 +24,13 @@ namespace AdServer::CampaignSvcs::CTR
 
   typedef ReferenceCounting::SmartPtr<FastFeatureSetHolder>
     FastFeatureSetHolder_var;
+
+  auto FastFeatureSetHolder::get(uint32_t feature_id) const
+  {
+    // LibSVM model IDs are one-based; runtime feature hashes are zero-based.
+    return feature_id > 0 ? Vanga::FastFeatureSet::get(feature_id - 1) :
+      decltype(Vanga::FastFeatureSet::get(feature_id)){};
+  }
 
   namespace
   {
@@ -81,8 +89,7 @@ namespace AdServer::CampaignSvcs::CTR
     try
     {
       std::ifstream model_file_istr(model_file.str().c_str());
-      Vanga::DTree_var regression_predictor = Vanga::DTree::load(model_file_istr);
-      vanga_predictor_ = new Vanga::LogRegPredictor<Vanga::DTree>(regression_predictor);
+      vanga_predictor_ = Vanga::DTree::load(model_file_istr);
     }
     catch(const eh::Exception& ex)
     {
@@ -117,7 +124,10 @@ namespace AdServer::CampaignSvcs::CTR
     {
       if (HASH_SETS[i])
       {
-        vanga_feature_set->set(HASH_SETS[i]->begin(), HASH_SETS[i]->end());
+        for (const auto& [feature_index, feature_value] : *HASH_SETS[i])
+        {
+          vanga_feature_set->set(feature_index, feature_value);
+        }
       }
     }
 
@@ -140,7 +150,7 @@ namespace AdServer::CampaignSvcs::CTR
       std::cout << std::endl;
     }
 
-    float ctr = vanga_predictor_->fpredict(*vanga_feature_set); // no throw
+    const double prediction = vanga_predictor_->fpredict(*vanga_feature_set);
 
     for (unsigned int i = 0; i < sizeof(HASH_SETS) / sizeof(HASH_SETS[0]); ++i)
     {
@@ -152,11 +162,6 @@ namespace AdServer::CampaignSvcs::CTR
 
     feature_set_provider.release(vanga_feature_set);
 
-    if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
-    {
-      return 0.0;
-    }
-
-    return ctr;
+    return prediction;
   }
 }

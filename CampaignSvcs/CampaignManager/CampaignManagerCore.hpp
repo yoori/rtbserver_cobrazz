@@ -7,7 +7,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <optional>
+#include <scoped_allocator>
 #include <utility>
 #include <vector>
 #include <unordered_set>
@@ -86,6 +88,11 @@ namespace AdServer::CampaignSvcs
     using ByteArray = std::vector<unsigned char>;
     using IdArray = std::vector<unsigned long>;
     using StringArray = std::vector<std::string>;
+
+    template<typename T>
+    using ArenaVector = std::vector<T, std::scoped_allocator_adaptor<Generics::MonoAllocator<T>>>;
+
+    using ArenaStringArray = ArenaVector<Generics::MonoString>;
     using RequestIdArray = std::vector<AdServer::Commons::RequestId>;
 
     struct TokenInfo
@@ -108,13 +115,25 @@ namespace AdServer::CampaignSvcs
 
     struct NativeDataTokenInfo
     {
-      std::string name;
+      using allocator_type = Generics::MonoAllocator<char>;
+
+      explicit NativeDataTokenInfo(const allocator_type& allocator);
+      NativeDataTokenInfo(const NativeDataTokenInfo& other, const allocator_type& allocator);
+      NativeDataTokenInfo(NativeDataTokenInfo&& other, const allocator_type& allocator);
+
+      Generics::MonoString name;
       bool required = false;
     };
 
     struct NativeImageTokenInfo
     {
-      std::string name;
+      using allocator_type = Generics::MonoAllocator<char>;
+
+      explicit NativeImageTokenInfo(const allocator_type& allocator);
+      NativeImageTokenInfo(const NativeImageTokenInfo& other, const allocator_type& allocator);
+      NativeImageTokenInfo(NativeImageTokenInfo&& other, const allocator_type& allocator);
+
+      Generics::MonoString name;
       bool required = false;
       unsigned long width = 0;
       unsigned long height = 0;
@@ -300,28 +319,37 @@ namespace AdServer::CampaignSvcs
     };
 
     using ChannelTriggerMatchArray = std::vector<ChannelTriggerMatchInfo>;
+    using ArenaChannelTriggerMatchArray = Generics::MonoVector<ChannelTriggerMatchInfo>;
 
     struct TriggerMatchResultInfo
     {
-      ChannelTriggerMatchArray url_channels;
-      ChannelTriggerMatchArray pkw_channels;
-      ChannelTriggerMatchArray skw_channels;
-      ChannelTriggerMatchArray ukw_channels;
-      IdArray uid_channels;
+      explicit TriggerMatchResultInfo(Generics::MonoAllocatorArena* arena);
+
+      ArenaChannelTriggerMatchArray url_channels;
+      ArenaChannelTriggerMatchArray pkw_channels;
+      ArenaChannelTriggerMatchArray skw_channels;
+      ArenaChannelTriggerMatchArray ukw_channels;
+      Generics::MonoVector<unsigned long> uid_channels;
     };
 
     struct CCGKeywordInfo
     {
+      using allocator_type = Generics::MonoAllocator<char>;
+
+      explicit CCGKeywordInfo(const allocator_type& allocator);
+      CCGKeywordInfo(const CCGKeywordInfo& other, const allocator_type& allocator);
+      CCGKeywordInfo(CCGKeywordInfo&& other, const allocator_type& allocator);
+
       unsigned long ccg_keyword_id = 0;
       unsigned long ccg_id = 0;
       unsigned long channel_id = 0;
       RevenueDecimal max_cpc = RevenueDecimal::ZERO;
       RevenueDecimal ctr = RevenueDecimal::ZERO;
-      std::string click_url;
-      std::string original_keyword;
+      Generics::MonoString click_url;
+      Generics::MonoString original_keyword;
     };
 
-    using CCGKeywordArray = std::vector<CCGKeywordInfo>;
+    using CCGKeywordArray = ArenaVector<CCGKeywordInfo>;
 
     struct CommonMatchRequestInfo
     {
@@ -354,16 +382,45 @@ namespace AdServer::CampaignSvcs
 
     struct CommonAdRequest
     {
-      CommonAdRequest() = default;
+      template<typename T>
+      using Vector = ArenaVector<T>;
 
-      explicit CommonAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena) noexcept
-        : arena_(std::move(arena))
-      {}
+      struct GeoInfo
+      {
+        using allocator_type = Generics::MonoAllocator<char>;
+
+        explicit GeoInfo(const allocator_type& allocator);
+        GeoInfo(std::string_view country, std::string_view region, std::string_view city,
+          const allocator_type& allocator);
+        GeoInfo(const GeoInfo& other, const allocator_type& allocator);
+        GeoInfo(GeoInfo&& other, const allocator_type& allocator);
+
+        Generics::MonoString country;
+        Generics::MonoString region;
+        Generics::MonoString city;
+      };
+
+      struct TokenInfo
+      {
+        using allocator_type = Generics::MonoAllocator<char>;
+
+        explicit TokenInfo(const allocator_type& allocator);
+        TokenInfo(std::string_view name, std::string_view value, const allocator_type& allocator);
+        TokenInfo(const TokenInfo& other, const allocator_type& allocator);
+        TokenInfo(TokenInfo&& other, const allocator_type& allocator);
+
+        Generics::MonoString name;
+        Generics::MonoString value;
+      };
+
+      CommonAdRequest();
+      explicit CommonAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena);
+      ~CommonAdRequest();
 
       CommonAdRequest(const CommonAdRequest&) = delete;
       CommonAdRequest& operator=(const CommonAdRequest&) = delete;
-      CommonAdRequest(CommonAdRequest&&) noexcept = default;
-      CommonAdRequest& operator=(CommonAdRequest&&) noexcept = default;
+      CommonAdRequest(CommonAdRequest&&) noexcept;
+      CommonAdRequest& operator=(CommonAdRequest&& other) noexcept;
 
     private:
       std::shared_ptr<Generics::MonoAllocatorArena> arena_;
@@ -372,38 +429,38 @@ namespace AdServer::CampaignSvcs
       Generics::Time time;
       AdServer::Commons::RequestId request_id;
       AdServer::Commons::RequestId debug_request_id;
-      std::string creative_instantiate_type;
+      Generics::MonoString creative_instantiate_type;
       unsigned long request_type = 0;
       unsigned long random = 0;
       bool test_request = false;
       bool log_as_test = false;
       unsigned long colo_id = 0;
-      std::string external_user_id;
-      std::string source_id;
-      std::vector<GeoInfo> location;
-      std::vector<GeoCoordInfo> coord_location;
-      std::string full_referer;
-      std::string referer;
-      StringArray urls;
-      std::string security_token;
-      std::string pub_impr_track_url;
-      std::string pub_param;
-      std::string preclick_url;
-      std::string click_prefix_url;
-      std::string original_url;
+      Generics::MonoString external_user_id;
+      Generics::MonoString source_id;
+      Vector<GeoInfo> location;
+      Generics::MonoVector<GeoCoordInfo> coord_location;
+      Generics::MonoString full_referer;
+      Generics::MonoString referer;
+      Vector<Generics::MonoString> urls;
+      Generics::MonoString security_token;
+      Generics::MonoString pub_impr_track_url;
+      Generics::MonoString pub_param;
+      Generics::MonoString preclick_url;
+      Generics::MonoString click_prefix_url;
+      Generics::MonoString original_url;
       AdServer::Commons::UserId track_user_id;
       AdServer::Commons::UserId user_id;
       unsigned long user_status = 0;
-      std::string signed_user_id;
-      std::string peer_ip;
-      std::string user_agent;
-      std::string cohort;
+      Generics::MonoString signed_user_id;
+      Generics::MonoString peer_ip;
+      Generics::MonoString user_agent;
+      Generics::MonoString cohort;
       unsigned long hpos = 0;
-      std::string ext_track_params;
-      TokenArray tokens;
+      Generics::MonoString ext_track_params;
+      Vector<TokenInfo> tokens;
       bool set_cookie = false;
-      std::string passback_type;
-      std::string passback_url;
+      Generics::MonoString passback_type;
+      Generics::MonoString passback_url;
     };
 
     struct ContextAdRequest
@@ -495,32 +552,30 @@ namespace AdServer::CampaignSvcs
 
     struct AdSlotRequest
     {
-      AdSlotRequest() = default;
-
-      explicit AdSlotRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena) noexcept
-        : arena_(std::move(arena))
-      {}
+      AdSlotRequest();
+      explicit AdSlotRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena);
+      ~AdSlotRequest();
 
       AdSlotRequest(const AdSlotRequest&) = delete;
       AdSlotRequest& operator=(const AdSlotRequest&) = delete;
-      AdSlotRequest(AdSlotRequest&&) noexcept = default;
-      AdSlotRequest& operator=(AdSlotRequest&&) noexcept = default;
+      AdSlotRequest(AdSlotRequest&&) noexcept;
+      AdSlotRequest& operator=(AdSlotRequest&& other) noexcept;
 
     private:
       std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
       unsigned long ad_slot_id = 0;
-      std::string format;
+      Generics::MonoString format;
       unsigned long tag_id = 0;
-      StringArray sizes;
-      std::string ext_tag_id;
+      ArenaStringArray sizes;
+      Generics::MonoString ext_tag_id;
       RevenueDecimal min_ecpm = RevenueDecimal::ZERO;
-      std::string min_ecpm_currency_code;
-      StringArray currency_codes;
+      Generics::MonoString min_ecpm_currency_code;
+      ArenaStringArray currency_codes;
       bool passback = false;
-      StringArray exclude_categories;
-      StringArray required_categories;
+      ArenaStringArray exclude_categories;
+      ArenaStringArray required_categories;
       long up_expand_space = -1;
       long right_expand_space = -1;
       long left_expand_space = -1;
@@ -535,12 +590,12 @@ namespace AdServer::CampaignSvcs
       unsigned long video_width = 0;
       unsigned long video_height = 0;
       unsigned long debug_ccg = 0;
-      IdArray allowed_durations;
-      std::vector<NativeDataTokenInfo> native_data_tokens;
-      std::vector<NativeImageTokenInfo> native_image_tokens;
+      Generics::MonoVector<unsigned long> allowed_durations;
+      ArenaVector<NativeDataTokenInfo> native_data_tokens;
+      ArenaVector<NativeImageTokenInfo> native_image_tokens;
       unsigned long native_ads_impression_tracker_type = 0;
       bool fill_track_html = false;
-      TokenArray tokens;
+      ArenaVector<CommonAdRequest::TokenInfo> tokens;
     };
 
     using AdSlotRequestPtr = std::shared_ptr<AdSlotRequest>;
@@ -567,15 +622,28 @@ namespace AdServer::CampaignSvcs
 
     struct LogAdRequest
     {
+      LogAdRequest();
+      explicit LogAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena);
+      ~LogAdRequest();
+
+      LogAdRequest(const LogAdRequest&) = delete;
+      LogAdRequest& operator=(const LogAdRequest&) = delete;
+      LogAdRequest(LogAdRequest&&) noexcept;
+      LogAdRequest& operator=(LogAdRequest&& other) noexcept;
+
+    private:
+      std::shared_ptr<Generics::MonoAllocatorArena> arena_;
+
+    public:
       unsigned long profiling_type = 0;
       unsigned long search_engine_id = 0;
       bool page_keywords_present = false;
       bool disable_fraud_detection = false;
       bool fraud = false;
       TriggerMatchResultInfo trigger_match_result;
-      std::string search_words;
-      std::string page_keywords;
-      std::string url_keywords;
+      Generics::MonoString search_words;
+      Generics::MonoString page_keywords;
+      Generics::MonoString url_keywords;
       AdServer::Commons::UserId merged_user_id;
     };
 
@@ -586,41 +654,17 @@ namespace AdServer::CampaignSvcs
       using SeqOrderArray = Generics::MonoVector<SeqOrderInfo>;
       using CampaignFreqArray = Generics::MonoVector<CampaignFreqInfo>;
 
-      GetAdRequest()
-        : GetAdRequest(std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
-      {}
-
-      explicit GetAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena)
-        : arena_(arena ?
-            std::move(arena) :
-            std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
-          ad_slots(Generics::mono_allocator<AdSlotRequestPtr>(arena_.get())),
-          publisher_account_ids(Generics::mono_allocator<unsigned long>(arena_.get())),
-          channels(Generics::mono_allocator<ChannelId>(arena_.get())),
-          seq_orders(Generics::mono_allocator<SeqOrderInfo>(arena_.get())),
-          campaign_freqs(Generics::mono_allocator<CampaignFreqInfo>(arena_.get())),
-          full_freq_caps(Generics::mono_allocator<unsigned long>(arena_.get())),
-          ccg_keywords(Generics::mono_allocator<CCGKeywordInfo>(arena_.get())),
-          exclude_pubpixel_accounts(Generics::mono_allocator<unsigned long>(arena_.get()))
-      {}
+      GetAdRequest();
+      explicit GetAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena);
 
       GetAdRequest(const GetAdRequest&) = delete;
       GetAdRequest& operator=(const GetAdRequest&) = delete;
 
-      GetAdRequest(GetAdRequest&&) noexcept = default;
+      GetAdRequest(GetAdRequest&&) noexcept;
       GetAdRequest& operator=(GetAdRequest&&) = delete;
 
-      Generics::MonoAllocatorArena*
-      resource() const noexcept
-      {
-        return arena_.get();
-      }
-
-      const std::shared_ptr<Generics::MonoAllocatorArena>&
-      arena() const noexcept
-      {
-        return arena_;
-      }
+      Generics::MonoAllocatorArena* resource() const noexcept;
+      const std::shared_ptr<Generics::MonoAllocatorArena>& arena() const noexcept;
 
     private:
       std::shared_ptr<Generics::MonoAllocatorArena> arena_;
@@ -643,7 +687,7 @@ namespace AdServer::CampaignSvcs
       bool profiling_available = false;
       unsigned long tag_delivery_factor = 0;
       unsigned long ccg_delivery_factor = 0;
-      Generics::MonoVector<CCGKeywordInfo> ccg_keywords;
+      CCGKeywordArray ccg_keywords;
       Generics::Time client_create_time;
       Generics::Time session_start;
 
@@ -1128,8 +1172,8 @@ namespace AdServer::CampaignSvcs
       const Generics::MonoVector<unsigned long>& publisher_account_ids,
       const CampaignConfig& campaign_config,
       unsigned long tag_id,
-      const StringArray& sizes,
-      const StringArray& currency_codes)
+      const ArenaStringArray& sizes,
+      const ArenaStringArray& currency_codes)
       const noexcept;
 
     AdServer::Commons::Awaitable<bool>
@@ -1265,7 +1309,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig* campaign_config,
       const Tag* tag,
       CampaignKeywordMap& result_keywords,
-      const Generics::MonoVector<CCGKeywordInfo>& keywords,
+      const CCGKeywordArray& keywords,
       bool profiling_available,
       const FreqCapIdSet& full_freq_caps)
       noexcept;
@@ -1286,7 +1330,7 @@ namespace AdServer::CampaignSvcs
       MonoCreativeCategoryIdSet& exclude_categories,
       const CampaignConfig& config,
       unsigned long request_type,
-      const StringArray& categories)
+      const ArenaStringArray& categories)
       noexcept;
 
     static void
@@ -1323,11 +1367,11 @@ namespace AdServer::CampaignSvcs
       std::string& creative_body)
       /*throw(eh::Exception)*/;
 
-    bool
-    match_geo_channels_(
+    template<typename Location, typename CoordLocation>
+    bool match_geo_channels_(
       const CampaignConfig& campaign_config,
-      const std::vector<GeoInfo>& location,
-      const std::vector<GeoCoordInfo>& coord_location,
+      const Location& location,
+      const CoordLocation& coord_location,
       ChannelIdArray& geo_channels,
       ChannelIdSet& coord_channels)
       /*throw(NotReady, Exception)*/;
@@ -1455,6 +1499,303 @@ namespace AdServer::CampaignSvcs
 
 namespace AdServer::CampaignSvcs
 {
+  template<typename Location, typename CoordLocation>
+  bool CampaignManagerCore::match_geo_channels_(
+    const CampaignConfig& campaign_config,
+    const Location& location,
+    const CoordLocation& coord_location,
+    ChannelIdArray& geo_channels,
+    ChannelIdSet& coord_channels)
+    /*throw(NotReady, Exception)*/
+  {
+    if (!location.empty() || !coord_location.empty())
+    {
+      if (!location.empty())
+      {
+        campaign_config.geo_channels->match(
+          geo_channels,
+          String::SubString(location[0].country.c_str()),
+          String::SubString(location[0].region.c_str()),
+          String::SubString(location[0].city.c_str()));
+      }
+
+      for (const auto& coord : coord_location)
+      {
+        campaign_config.geo_coord_channels->match(
+          coord_channels, coord.longitude, coord.latitude, coord.accuracy);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  inline CampaignManagerCore::NativeDataTokenInfo::NativeDataTokenInfo(
+    const allocator_type& allocator)
+    : name(allocator)
+  {}
+
+  inline CampaignManagerCore::NativeDataTokenInfo::NativeDataTokenInfo(
+    const NativeDataTokenInfo& other, const allocator_type& allocator)
+    : name(other.name, allocator), required(other.required)
+  {}
+
+  inline CampaignManagerCore::NativeDataTokenInfo::NativeDataTokenInfo(
+    NativeDataTokenInfo&& other, const allocator_type& allocator)
+    : name(std::move(other.name), allocator), required(other.required)
+  {}
+
+  inline CampaignManagerCore::NativeImageTokenInfo::NativeImageTokenInfo(
+    const allocator_type& allocator)
+    : name(allocator)
+  {}
+
+  inline CampaignManagerCore::NativeImageTokenInfo::NativeImageTokenInfo(
+    const NativeImageTokenInfo& other, const allocator_type& allocator)
+    : name(other.name, allocator),
+      required(other.required),
+      width(other.width),
+      height(other.height)
+  {}
+
+  inline CampaignManagerCore::NativeImageTokenInfo::NativeImageTokenInfo(
+    NativeImageTokenInfo&& other, const allocator_type& allocator)
+    : name(std::move(other.name), allocator),
+      required(other.required),
+      width(other.width),
+      height(other.height)
+  {}
+
+  inline CampaignManagerCore::CCGKeywordInfo::CCGKeywordInfo(const allocator_type& allocator)
+    : click_url(allocator), original_keyword(allocator)
+  {}
+
+  inline CampaignManagerCore::CCGKeywordInfo::CCGKeywordInfo(
+    const CCGKeywordInfo& other, const allocator_type& allocator)
+    : ccg_keyword_id(other.ccg_keyword_id),
+      ccg_id(other.ccg_id),
+      channel_id(other.channel_id),
+      max_cpc(other.max_cpc),
+      ctr(other.ctr),
+      click_url(other.click_url, allocator),
+      original_keyword(other.original_keyword, allocator)
+  {}
+
+  inline CampaignManagerCore::CCGKeywordInfo::CCGKeywordInfo(
+    CCGKeywordInfo&& other, const allocator_type& allocator)
+    : ccg_keyword_id(other.ccg_keyword_id),
+      ccg_id(other.ccg_id),
+      channel_id(other.channel_id),
+      max_cpc(other.max_cpc),
+      ctr(other.ctr),
+      click_url(std::move(other.click_url), allocator),
+      original_keyword(std::move(other.original_keyword), allocator)
+  {}
+
+  inline CampaignManagerCore::TriggerMatchResultInfo::TriggerMatchResultInfo(
+    Generics::MonoAllocatorArena* arena)
+    : url_channels(arena),
+      pkw_channels(arena),
+      skw_channels(arena),
+      ukw_channels(arena),
+      uid_channels(arena)
+  {}
+
+  inline CampaignManagerCore::AdSlotRequest::AdSlotRequest()
+    : AdSlotRequest(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  inline CampaignManagerCore::AdSlotRequest::AdSlotRequest(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      format(decltype(format)::allocator_type(arena_.get())),
+      sizes(decltype(sizes)::allocator_type(arena_.get())),
+      ext_tag_id(decltype(ext_tag_id)::allocator_type(arena_.get())),
+      min_ecpm_currency_code(decltype(min_ecpm_currency_code)::allocator_type(arena_.get())),
+      currency_codes(decltype(currency_codes)::allocator_type(arena_.get())),
+      exclude_categories(decltype(exclude_categories)::allocator_type(arena_.get())),
+      required_categories(decltype(required_categories)::allocator_type(arena_.get())),
+      allowed_durations(decltype(allowed_durations)::allocator_type(arena_.get())),
+      native_data_tokens(decltype(native_data_tokens)::allocator_type(arena_.get())),
+      native_image_tokens(decltype(native_image_tokens)::allocator_type(arena_.get())),
+      tokens(decltype(tokens)::allocator_type(arena_.get()))
+  {}
+
+  inline CampaignManagerCore::AdSlotRequest::AdSlotRequest(AdSlotRequest&&) noexcept = default;
+
+  inline CampaignManagerCore::AdSlotRequest::~AdSlotRequest() = default;
+
+  inline CampaignManagerCore::AdSlotRequest&
+  CampaignManagerCore::AdSlotRequest::operator=(AdSlotRequest&& other) noexcept
+  {
+    if (this != &other)
+    {
+      // Destroy the old fields while their arena is still alive.
+      this->~AdSlotRequest();
+      new (this) AdSlotRequest(std::move(other));
+    }
+
+    return *this;
+  }
+
+  inline CampaignManagerCore::LogAdRequest::LogAdRequest()
+    : LogAdRequest(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  inline CampaignManagerCore::LogAdRequest::LogAdRequest(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      trigger_match_result(arena_.get()),
+      search_words(decltype(search_words)::allocator_type(arena_.get())),
+      page_keywords(decltype(page_keywords)::allocator_type(arena_.get())),
+      url_keywords(decltype(url_keywords)::allocator_type(arena_.get()))
+  {}
+
+  inline CampaignManagerCore::LogAdRequest::LogAdRequest(LogAdRequest&&) noexcept = default;
+
+  inline CampaignManagerCore::LogAdRequest::~LogAdRequest() = default;
+
+  inline CampaignManagerCore::LogAdRequest&
+  CampaignManagerCore::LogAdRequest::operator=(LogAdRequest&& other) noexcept
+  {
+    if (this != &other)
+    {
+      // Destroy the old fields while their arena is still alive.
+      this->~LogAdRequest();
+      new (this) LogAdRequest(std::move(other));
+    }
+
+    return *this;
+  }
+
+  inline CampaignManagerCore::GetAdRequest::GetAdRequest()
+    : GetAdRequest(std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
+  {}
+
+  inline CampaignManagerCore::GetAdRequest::GetAdRequest(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ?
+        std::move(arena) :
+        std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
+      ad_slots(decltype(ad_slots)::allocator_type(arena_.get())),
+      publisher_account_ids(decltype(publisher_account_ids)::allocator_type(arena_.get())),
+      channels(decltype(channels)::allocator_type(arena_.get())),
+      seq_orders(decltype(seq_orders)::allocator_type(arena_.get())),
+      campaign_freqs(decltype(campaign_freqs)::allocator_type(arena_.get())),
+      full_freq_caps(decltype(full_freq_caps)::allocator_type(arena_.get())),
+      ccg_keywords(decltype(ccg_keywords)::allocator_type(arena_.get())),
+      exclude_pubpixel_accounts(decltype(exclude_pubpixel_accounts)::allocator_type(arena_.get())),
+      log_request(arena_)
+  {}
+
+  inline CampaignManagerCore::GetAdRequest::GetAdRequest(GetAdRequest&&) noexcept = default;
+
+  inline Generics::MonoAllocatorArena* CampaignManagerCore::GetAdRequest::resource() const noexcept
+  {
+    return arena_.get();
+  }
+
+  inline const std::shared_ptr<Generics::MonoAllocatorArena>&
+  CampaignManagerCore::GetAdRequest::arena() const noexcept
+  {
+    return arena_;
+  }
+
+  inline CampaignManagerCore::CommonAdRequest::GeoInfo::GeoInfo(const allocator_type& allocator)
+    : country(allocator), region(allocator), city(allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::GeoInfo::GeoInfo(
+    std::string_view country_value, std::string_view region_value, std::string_view city_value,
+    const allocator_type& allocator)
+    : country(country_value, allocator),
+      region(region_value, allocator),
+      city(city_value, allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::GeoInfo::GeoInfo(
+    const GeoInfo& other, const allocator_type& allocator)
+    : country(other.country, allocator),
+      region(other.region, allocator),
+      city(other.city, allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::GeoInfo::GeoInfo(
+    GeoInfo&& other, const allocator_type& allocator)
+    : country(std::move(other.country), allocator),
+      region(std::move(other.region), allocator),
+      city(std::move(other.city), allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::TokenInfo::TokenInfo(const allocator_type& allocator)
+    : name(allocator), value(allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::TokenInfo::TokenInfo(
+    std::string_view name_value, std::string_view value_value, const allocator_type& allocator)
+    : name(name_value, allocator), value(value_value, allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::TokenInfo::TokenInfo(
+    const TokenInfo& other, const allocator_type& allocator)
+    : name(other.name, allocator), value(other.value, allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::TokenInfo::TokenInfo(
+    TokenInfo&& other, const allocator_type& allocator)
+    : name(std::move(other.name), allocator), value(std::move(other.value), allocator)
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::CommonAdRequest()
+    : CommonAdRequest(std::make_shared<Generics::MonoAllocatorArena>())
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::CommonAdRequest(
+    std::shared_ptr<Generics::MonoAllocatorArena> arena)
+    : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
+      creative_instantiate_type(decltype(creative_instantiate_type)::allocator_type(arena_.get())),
+      external_user_id(decltype(external_user_id)::allocator_type(arena_.get())),
+      source_id(decltype(source_id)::allocator_type(arena_.get())),
+      location(decltype(location)::allocator_type(arena_.get())),
+      coord_location(decltype(coord_location)::allocator_type(arena_.get())),
+      full_referer(decltype(full_referer)::allocator_type(arena_.get())),
+      referer(decltype(referer)::allocator_type(arena_.get())),
+      urls(decltype(urls)::allocator_type(arena_.get())),
+      security_token(decltype(security_token)::allocator_type(arena_.get())),
+      pub_impr_track_url(decltype(pub_impr_track_url)::allocator_type(arena_.get())),
+      pub_param(decltype(pub_param)::allocator_type(arena_.get())),
+      preclick_url(decltype(preclick_url)::allocator_type(arena_.get())),
+      click_prefix_url(decltype(click_prefix_url)::allocator_type(arena_.get())),
+      original_url(decltype(original_url)::allocator_type(arena_.get())),
+      signed_user_id(decltype(signed_user_id)::allocator_type(arena_.get())),
+      peer_ip(decltype(peer_ip)::allocator_type(arena_.get())),
+      user_agent(decltype(user_agent)::allocator_type(arena_.get())),
+      cohort(decltype(cohort)::allocator_type(arena_.get())),
+      ext_track_params(decltype(ext_track_params)::allocator_type(arena_.get())),
+      tokens(decltype(tokens)::allocator_type(arena_.get())),
+      passback_type(decltype(passback_type)::allocator_type(arena_.get())),
+      passback_url(decltype(passback_url)::allocator_type(arena_.get()))
+  {}
+
+  inline CampaignManagerCore::CommonAdRequest::CommonAdRequest(CommonAdRequest&&)
+    noexcept = default;
+
+  inline CampaignManagerCore::CommonAdRequest::~CommonAdRequest() = default;
+
+  inline CampaignManagerCore::CommonAdRequest&
+  CampaignManagerCore::CommonAdRequest::operator=(CommonAdRequest&& other) noexcept
+  {
+    if (this != &other)
+    {
+      // Destroy the old fields while their arena is still alive.
+      this->~CommonAdRequest();
+      new (this) CommonAdRequest(std::move(other));
+    }
+
+    return *this;
+  }
+
   inline
   ConstCampaignConfigPtr
   CampaignManagerCore::get_campaign_config(bool required) const

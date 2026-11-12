@@ -1,7 +1,6 @@
 #pragma once
 
 #include <DTree/DTree.hpp>
-#include <DTree/LogRegPredictor.hpp>
 
 #include "CTREvaluator.hpp"
 
@@ -22,6 +21,6 @@ namespace AdServer::CampaignSvcs::CTR
       const HashArray* opt_hashes) const override;
 
   private:
-    Gears::IntrusivePtr<Vanga::LogRegPredictor<Vanga::DTree> > vanga_predictor_;
+    Vanga::DTree_var vanga_predictor_;
   };
 }

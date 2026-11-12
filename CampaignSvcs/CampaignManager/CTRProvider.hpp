@@ -6,6 +6,7 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Hash.hpp>
 #include <Generics/Singleton.hpp>
 #include <Generics/TaskRunner.hpp>
@@ -81,7 +82,7 @@ namespace AdServer::CampaignSvcs::CTR
     class CalculationContext: public ReferenceCounting::AtomicImpl
     {
     public:
-      using CTRList = std::list<RevenueDecimal>;
+      using CTRList = Generics::MonoList<RevenueDecimal>;
 
       virtual RevenueDecimal
       get_ctr(const Creative* creative) const = 0;
