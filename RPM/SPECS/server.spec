@@ -122,6 +122,7 @@ Obsoletes: postgresql94-libs
 Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: libpq-devel >= %{__libpq_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
+BuildRequires: protobuf-lite = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
 #BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
