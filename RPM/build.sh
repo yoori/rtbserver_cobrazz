@@ -65,7 +65,9 @@ popd
 #popd
 
 cat "$DSP_SPEC_FILE" | sed 's/%{version}/1.0.0.0/' | sed 's/%{__product}/server/' | sed 's/%{__server_type}/central/' >s.spec
-yum-builddep -y ./s.spec || { echo "can't install build requirements" >&2 ; exit 1 ; }
+yum-builddep -y --define "__product server" --define "__server_type central" \
+  --define "version 1.0.0.0" ./s.spec || \
+  { echo "can't install build requirements" >&2 ; exit 1 ; }
 
 rpmbuild --force -ba --define "__product server" --define "__server_type central" --define "version $VERSION" "$DSP_SPEC_FILE" || \
   { echo "can't build RPM" >&2 ; exit 1 ; }

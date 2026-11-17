@@ -4,6 +4,7 @@ function(add_pb _target _pbfile target_dir)
   get_filename_component(IDL_FILE_NAME_WE ${_pbfile} NAME_WE)
   set(MIDL_OUTPUT_PATH ${target_dir})
   set(OUTPUTCPP ${MIDL_OUTPUT_PATH}/${IDL_FILE_NAME_WE}.pb.cc)
+  set(OUTPUTHPP ${MIDL_OUTPUT_PATH}/${IDL_FILE_NAME_WE}.pb.h)
 
   include_directories(${target_dir})
 
@@ -14,12 +15,11 @@ function(add_pb _target _pbfile target_dir)
   add_custom_target(${PROTOBUF_TARGET} DEPENDS "${OUTPUTCPP}")
   add_custom_command(
     OUTPUT ${OUTPUTCPP} ${OUTPUTHPP}
-    COMMAND protoc
-      --experimental_editions
+    COMMAND $<TARGET_FILE:protobuf::protoc>
       --proto_path=${CMAKE_CURRENT_LIST_DIR}
       --cpp_out=${MIDL_OUTPUT_PATH}
       ${SRC}
-    DEPENDS ${PROTOBUF_TARGET}
+    DEPENDS ${SRC} protobuf::protoc
   )
 
   add_library(${_target} STATIC ${OUTPUTCPP})
